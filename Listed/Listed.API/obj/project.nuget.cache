@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "be7HvUTqvH8=",
+  "success": true,
+  "projectFilePath": "C:\\Konsler\\listed-backend\\Listed\\Listed.API\\Listed.API.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Edlir\\.nuget\\packages\\microsoft.visualstudio.azure.containers.tools.targets\\1.21.0\\microsoft.visualstudio.azure.containers.tools.targets.1.21.0.nupkg.sha512"
+  ],
+  "logs": []
+}
