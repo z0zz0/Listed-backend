@@ -1,0 +1,110 @@
+# --------------------------------
+# Visual Studio / .NET
+# --------------------------------
+
+# Build Results
+[Bb]in/
+[Oo]bj/
+
+# NuGet Packages
+*.nupkg
+# The packages folder can be ignored if you enable Package Restore
+packages/
+# Uncomment if necessary (NuGet 3+ puts packages in .nuget\packages)
+# .nuget\
+
+# Debug/Release Folders
+debug/
+release/
+[Dd]ebugPublic/
+[Rr]eleasePublic/
+x64/
+x86/
+build/
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+
+# Rider
+.idea/
+*.sln.iml
+
+# Visual Studio cache files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.csproj.user
+*.psess
+*.vsp
+
+# Roslyn
+*.ide.cs
+
+# ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+# MSTest
+*.testresults
+[TestResults]/
+
+# Visual Studio Code Snippets, visualizers, etc.
+*.snippet
+*.vspx
+*.vspscc
+
+# Local History
+.localhistory/
+
+# SQL Server files
+*.mdf
+*.ldf
+
+# DotCover reports
+*.dcvr
+
+# Others
+*.log
+*.tlog
+*.vsix
+*.cache
+*.temp
+*.tmp
+*.svclog
+*.pidb
+*.scc
+*.pdb
+*.mdb
+*.opendb
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Lock Files
+*.lock.json
+~$*
+
+# Yarn / NPM
+node_modules/
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Secrets / Environment / Config (adjust as needed)
+*.env
+.env.*
+secrets.json
+appsettings.Development.json
+
+# Docker overrides
+docker-compose.override.yml
+
+# Build logs
+msbuild.log
