@@ -11,7 +11,7 @@
 # The packages folder can be ignored if you enable Package Restore
 packages/
 # Uncomment if necessary (NuGet 3+ puts packages in .nuget\packages)
-# .nuget\
+.nuget\
 
 # Debug/Release Folders
 debug/
@@ -84,6 +84,7 @@ _ReSharper*/
 Thumbs.db
 ehthumbs.db
 desktop.ini
+**.bak
 
 # Lock Files
 *.lock.json
