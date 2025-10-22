@@ -6,11 +6,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" />
 	</ItemGroup>
 	
 	<ItemGroup>
 		<ProjectReference Include="..\Listed.Domain\Listed.Domain.csproj" />
 	</ItemGroup>
-	
 </Project>

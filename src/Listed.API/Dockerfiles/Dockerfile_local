@@ -1,0 +1,20 @@
+# Dockerfile with Live Reload for Compose (used for local development)
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dev
+WORKDIR /app
+
+ENV ASPNETCORE_URLS=http://+:5000;https://+:5001
+ENV DOTNET_USE_POLLING_FILE_WATCHER=1
+
+EXPOSE 5000
+EXPOSE 5001
+
+COPY ["src/Listed.API/Listed.API.csproj", "src/Listed.API/"]
+COPY ["src/Listed.Domain/Listed.Domain.csproj", "src/Listed.Domain/"]
+COPY ["src/Listed.Application/Listed.Application.csproj", "src/Listed.Application/"]
+COPY ["src/Listed.Infrastructure/Listed.Infrastructure.csproj", "src/Listed.Infrastructure/"]
+
+RUN dotnet restore "src/Listed.API/Listed.API.csproj"
+COPY . .
+
+WORKDIR /app/Listed.API
+ENTRYPOINT ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://+:5000"]

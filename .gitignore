@@ -102,7 +102,6 @@ node_modules/
 *.env
 .env.*
 secrets.json
-appsettings.Development.json
 
 # Docker overrides
 docker-compose.override.yml
