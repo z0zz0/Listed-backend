@@ -8,6 +8,9 @@ ENV DOTNET_USE_POLLING_FILE_WATCHER=1
 EXPOSE 5000
 EXPOSE 5001
 
+# COPY props file BEFORE restore so version info is available
+COPY ["Directory.Packages.props", "."]
+
 COPY ["src/Listed.API/Listed.API.csproj", "src/Listed.API/"]
 COPY ["src/Listed.Domain/Listed.Domain.csproj", "src/Listed.Domain/"]
 COPY ["src/Listed.Application/Listed.Application.csproj", "src/Listed.Application/"]

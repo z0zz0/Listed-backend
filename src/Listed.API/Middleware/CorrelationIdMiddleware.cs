@@ -1,20 +1,27 @@
 ﻿using Serilog.Context;
+using System.Diagnostics;
 
 namespace Listed.API.Middleware;
 
 public class CorrelationIdMiddleware(RequestDelegate next)
 {
-    private const string HeaderName = "X-Correlation-ID";
+    private const string Header = "X-Correlation-ID";
 
     public async Task Invoke(HttpContext context)
     {
-        var headerValue = context.Request.Headers[HeaderName].FirstOrDefault();
-        string correlationId = Guid.TryParse(headerValue, out var parsedGuid) ? parsedGuid.ToString() : Guid.NewGuid().ToString();
+        // Prefer W3C trace id (from traceparent if caller sent it)
+        var correlationId = Activity.Current?.TraceId.ToString();
 
-        context.Items[HeaderName] = correlationId;
+        // if ecosystem still sends X-Correlation-ID, keep it for display/debug
+        correlationId ??= context.Request.Headers[Header].FirstOrDefault();
+
+        // Final fallback
+        correlationId ??= context.TraceIdentifier;
+
+        // Echo back for clients
         context.Response.OnStarting(() =>
         {
-            context.Response.Headers[HeaderName] = correlationId;
+            context.Response.Headers[Header] = correlationId;
             return Task.CompletedTask;
         });
 
@@ -22,5 +29,6 @@ public class CorrelationIdMiddleware(RequestDelegate next)
         {
             await next(context);
         }
+            
     }
 }

@@ -4,6 +4,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
+# Copy central package versions before restore
+COPY ["Directory.Packages.props", "."]
+
 # Copy csproj files
 COPY ["src/Listed.API/Listed.API.csproj", "src/Listed.API/"]
 COPY ["src/Listed.Domain/Listed.Domain.csproj", "src/Listed.Domain/"]

@@ -4,14 +4,15 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.10"/>
+		<PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
 		
 		<!-- Serilog logging stack -->
 		<PackageVersion Include="Serilog" Version="4.3.0" />
 		<PackageVersion Include="Serilog.AspNetCore" Version="9.0.0" />
+		<PackageVersion Include="Serilog.Expressions" Version="5.0.0" />
+		<PackageVersion Include="Serilog.Settings.Configuration" Version="9.0.0" />
 		<PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
 		<PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
 		<PackageVersion Include="Serilog.Sinks.Seq" Version="9.0.0" />
-		<PackageVersion Include="Serilog.Settings.Configuration" Version="9.0.0" />
 	</ItemGroup>
 </Project>
