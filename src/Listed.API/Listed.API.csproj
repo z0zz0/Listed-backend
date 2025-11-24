@@ -21,6 +21,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="EFCore.NamingConventions" />
+	</ItemGroup>
+	
+	<ItemGroup>
 		<PackageReference Include="Serilog" />
 		<PackageReference Include="Serilog.AspNetCore" />
 		<PackageReference Include="Serilog.Expressions" />
@@ -28,6 +32,10 @@
 		<PackageReference Include="Serilog.Sinks.Console" />
 		<PackageReference Include="Serilog.Sinks.File" />
 		<PackageReference Include="Serilog.Sinks.Seq" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Listed.Infrastructure\Listed.Infrastructure.csproj" />
 	</ItemGroup>
 
 </Project>

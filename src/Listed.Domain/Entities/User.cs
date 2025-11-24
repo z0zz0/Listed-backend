@@ -1,42 +1,53 @@
-﻿namespace Listed.Domain.Entities
+﻿using Listed.Domain.Exceptions;
+
+namespace Listed.Domain.Entities;
+
+public class User
 {
-    public class User
+    public Guid Id { get; private set; }
+    public string Nationality { get; private set; }
+    public string NationalIdentificationNumber { get; private set; }
+    public string FirstName { get; private set; }
+    public string LastName { get; private set; }
+    public string PhoneNumber { get; private set; }
+    public bool HasPhonePrefix { get; private set; }
+    public string Email { get; private set; }
+    public string PasswordHash { get; private set; }
+    public string PasswordAlgorithm { get; private set; }
+    public DateTime? PasswordUpdatedAt { get; private set; }
+    public string? Biography { get; private set; }
+    public bool? IsVerified { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+
+    public ICollection<UserPhoto> Photos { get; private set; } = [];
+    public ICollection<OrganisationMember> OrganisationMemberships { get; private set; } = [];
+    public ICollection<EventParticipant> EventParticipations { get; private set; } = [];
+
+    private User() { } // EF Core
+
+    public User(string email)
     {
-        // Backing field to ensure the ID is never settable externally
-        private readonly Guid _id;
-
-        // Public read-only property that exposes the GUID
-        public Guid Id => _id;
-
-        // Basic profile info
-        public string UserName { get; private set; }
-        public string Email { get; private set; }
-        public string Bio { get; private set; } // "About Me" section
-
-        public DateTime CreatedAt { get; private set; }
-
-        private User() { /* Required for EF Core or serialization */ }
-
-        public User(string userName, string email, string bio)
+        if (string.IsNullOrWhiteSpace(email))
         {
-            // Generate a new GUID upon creation
-            _id = Guid.NewGuid();
-
-            if (string.IsNullOrWhiteSpace(userName))
-                throw new ArgumentException("Username is required", nameof(userName));
-            if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("Email is required", nameof(email));
-
-            UserName = userName;
-            Email = email;
-            Bio = bio;
-            CreatedAt = DateTime.UtcNow;
+            throw new UserDomainException("Email cannot be empty.");
         }
 
-        public void UpdateBio(string newBio)
-        {
-            // Possibly validate length or content
-            Bio = newBio;
+        if (!email.Contains('@')) {
+            throw new UserDomainException("Invalid email format.");
         }
+
+        Id = Guid.NewGuid();
+        Email = email.Trim().ToLowerInvariant();
+        CreatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdateBio(string newBiography)
+    {
+        if (newBiography?.Length > 500)
+        {
+            throw new UserDomainException("Bio cannot exceed 500 characters.");
+        }
+
+        Biography = newBiography?.Trim() ?? string.Empty;
     }
 }
