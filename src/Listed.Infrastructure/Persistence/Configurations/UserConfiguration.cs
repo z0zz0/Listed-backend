@@ -58,17 +58,21 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.CreatedAt)
             .IsRequired();
 
+        builder.Property(u => u.IsSoftDeleted)
+            .IsRequired();
+
+        // Indexes
         builder.HasIndex(u => u.NationalIdentificationNumber)
             .IsUnique()
-            .HasDatabaseName("users_nin_index");
+            .HasDatabaseName("unique_index_users_nin");
 
         builder.HasIndex(u => u.Email)
             .IsUnique()
-            .HasDatabaseName("users_email_index");
+            .HasDatabaseName("unique_index_users_email");
 
         builder.HasIndex(u => u.PhoneNumber)
             .IsUnique()
-            .HasDatabaseName("users_phone_number_index");
+            .HasDatabaseName("unique_index_users_phone_number");
         
         // Relationships
         builder.HasMany(u => u.Photos)
@@ -78,10 +82,12 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasMany(u => u.OrganisationMemberships)
                .WithOne(m => m.User)
-               .HasForeignKey(m => m.UserId);
+               .HasForeignKey(m => m.UserId)
+               .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(u => u.EventParticipations)
                .WithOne(ep => ep.User)
-               .HasForeignKey(ep => ep.UserId);
+               .HasForeignKey(ep => ep.UserId)
+               .OnDelete(DeleteBehavior.Cascade);
     }
 }

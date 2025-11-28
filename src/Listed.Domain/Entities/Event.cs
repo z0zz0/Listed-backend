@@ -13,7 +13,6 @@ public class Event
     public string? Description { get; private set; }
     public DateTime StartTime { get; private set; }
     public DateTime? EndTime { get; private set; }
-    public string TicketUrl { get; private set; }
     public Guid CreatedBy { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public Guid? UpdatedBy { get; private set; }

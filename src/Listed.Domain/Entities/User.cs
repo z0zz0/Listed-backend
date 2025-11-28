@@ -18,6 +18,7 @@ public class User
     public string? Biography { get; private set; }
     public bool? IsVerified { get; private set; }
     public DateTime CreatedAt { get; private set; }
+    public bool IsSoftDeleted { get; private set; }
 
     public ICollection<UserPhoto> Photos { get; private set; } = [];
     public ICollection<OrganisationMember> OrganisationMemberships { get; private set; } = [];
