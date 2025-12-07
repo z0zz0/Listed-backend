@@ -1,7 +1,7 @@
 # ----------------------------------------------------
 # Multi-stage Dockerfile for QA and Production Builds
 # ----------------------------------------------------
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy central package versions before restore
@@ -24,7 +24,7 @@ WORKDIR "/src/Listed.API"
 RUN dotnet publish "Listed.API.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Final runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:5000;https://+:5001
 EXPOSE 5000

@@ -1,5 +1,5 @@
 # Dockerfile with Live Reload for Compose (used for local development)
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dev
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dev
 WORKDIR /app
 
 ENV ASPNETCORE_URLS=http://+:5000;https://+:5001
