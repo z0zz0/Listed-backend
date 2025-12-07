@@ -23,6 +23,7 @@ public class ListedDbContext(DbContextOptions<ListedDbContext> options) : DbCont
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.HasDefaultSchema("listed");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ListedDbContext).Assembly);
         modelBuilder.UseSnakeCaseNames();
     }

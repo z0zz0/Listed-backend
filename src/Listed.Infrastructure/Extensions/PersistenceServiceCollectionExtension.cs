@@ -14,9 +14,10 @@ public static class PersistenceServiceCollectionExtensions
     {
         services.AddDbContext<ListedDbContext>(options =>
             options.UseNpgsql(connectionString, npgsqlOpts => npgsqlOpts
-                .MapEnum<EventStatus>("event_status")
-                .MapEnum<OrganisationRole>("organisation_role")
-                .MapEnum<ParticipationStatus>("participation_status")
+                .MapEnum<EventStatus>("event_status", "listed")
+                .MapEnum<OrganisationRole>("organisation_role", "listed")
+                .MapEnum<ParticipationStatus>("participation_status", "listed")
+                .MigrationsHistoryTable("__EFMigrationsHistory", "listed")
             )
         );
 

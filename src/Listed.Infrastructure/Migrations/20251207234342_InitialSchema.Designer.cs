@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Listed.Infrastructure.Migrations
 {
     [DbContext(typeof(ListedDbContext))]
-    [Migration("20251207221119_InitialSchema")]
+    [Migration("20251207234342_InitialSchema")]
     partial class InitialSchema
     {
         /// <inheritdoc />
@@ -21,12 +21,13 @@ namespace Listed.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("listed")
                 .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "event_status", new[] { "cancelled", "draft", "finished", "published" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "organisation_role", new[] { "admin", "owner" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "participation_status", new[] { "accepted", "invited", "rejected", "requested" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "listed", "event_status", new[] { "cancelled", "draft", "finished", "published" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "listed", "organisation_role", new[] { "admin", "owner" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "listed", "participation_status", new[] { "accepted", "invited", "rejected", "requested" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Listed.Domain.Entities.Event", b =>
@@ -72,7 +73,7 @@ namespace Listed.Infrastructure.Migrations
                         .HasColumnName("start_time");
 
                     b.Property<EventStatus>("Status")
-                        .HasColumnType("event_status")
+                        .HasColumnType("listed.event_status")
                         .HasColumnName("status");
 
                     b.Property<string>("Title")
@@ -99,7 +100,7 @@ namespace Listed.Infrastructure.Migrations
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("index_events_organisation_id");
 
-                    b.ToTable("events");
+                    b.ToTable("events", "listed");
                 });
 
             modelBuilder.Entity("Listed.Domain.Entities.EventParticipant", b =>
@@ -118,7 +119,7 @@ namespace Listed.Infrastructure.Migrations
                         .HasColumnName("event_id");
 
                     b.Property<ParticipationStatus>("Status")
-                        .HasColumnType("participation_status")
+                        .HasColumnType("listed.participation_status")
                         .HasColumnName("status");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -142,7 +143,7 @@ namespace Listed.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("unique_index_event_participants_event_id_user_id");
 
-                    b.ToTable("event_participants");
+                    b.ToTable("event_participants", "listed");
                 });
 
             modelBuilder.Entity("Listed.Domain.Entities.EventPhoto", b =>
@@ -176,7 +177,7 @@ namespace Listed.Infrastructure.Migrations
                     b.HasIndex("EventId")
                         .HasDatabaseName("index_event_photos_event_id");
 
-                    b.ToTable("event_photos");
+                    b.ToTable("event_photos", "listed");
                 });
 
             modelBuilder.Entity("Listed.Domain.Entities.Organisation", b =>
@@ -215,7 +216,7 @@ namespace Listed.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("unique_index_organisations_country_cin");
 
-                    b.ToTable("organisations");
+                    b.ToTable("organisations", "listed");
                 });
 
             modelBuilder.Entity("Listed.Domain.Entities.OrganisationMember", b =>
@@ -238,7 +239,7 @@ namespace Listed.Infrastructure.Migrations
                         .HasColumnName("organisation_id");
 
                     b.Property<OrganisationRole>("Role")
-                        .HasColumnType("organisation_role")
+                        .HasColumnType("listed.organisation_role")
                         .HasColumnName("role");
 
                     b.Property<Guid>("UserId")
@@ -255,7 +256,7 @@ namespace Listed.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("unique_index_organisation_members_organisation_id_user_id");
 
-                    b.ToTable("organisation_members");
+                    b.ToTable("organisation_members", "listed");
                 });
 
             modelBuilder.Entity("Listed.Domain.Entities.OrganisationPhoto", b =>
@@ -289,7 +290,7 @@ namespace Listed.Infrastructure.Migrations
                     b.HasIndex("OrganisationId")
                         .HasDatabaseName("index_organisation_photos_organisation_id");
 
-                    b.ToTable("organisation_photos");
+                    b.ToTable("organisation_photos", "listed");
                 });
 
             modelBuilder.Entity("Listed.Domain.Entities.User", b =>
@@ -340,7 +341,7 @@ namespace Listed.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("unique_index_users_email");
 
-                    b.ToTable("users");
+                    b.ToTable("users", "listed");
                 });
 
             modelBuilder.Entity("Listed.Domain.Entities.UserInfo", b =>
@@ -399,7 +400,7 @@ namespace Listed.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("unique_index_users_phone_number");
 
-                    b.ToTable("user_infos");
+                    b.ToTable("user_infos", "listed");
                 });
 
             modelBuilder.Entity("Listed.Domain.Entities.UserPhoto", b =>
@@ -433,7 +434,7 @@ namespace Listed.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("index_user_photos_user_id");
 
-                    b.ToTable("user_photos");
+                    b.ToTable("user_photos", "listed");
                 });
 
             modelBuilder.Entity("Listed.Domain.Entities.Event", b =>
