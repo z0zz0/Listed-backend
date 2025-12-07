@@ -2,8 +2,8 @@
 
 public enum ParticipationStatus
 {
-    Requested,
     Rejected,
+    Requested,
     Invited,
-    Accepted,
+    Accepted
 }

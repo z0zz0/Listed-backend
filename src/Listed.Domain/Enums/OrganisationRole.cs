@@ -3,5 +3,5 @@
 public enum OrganisationRole
 {
     Owner,
-    Admin,
+    Admin
 }

@@ -2,8 +2,8 @@
 
 public enum EventStatus
 {
+    Cancelled,
     Draft,
     Published,
-    Cancelled,
-    Finished,
+    Finished
 }

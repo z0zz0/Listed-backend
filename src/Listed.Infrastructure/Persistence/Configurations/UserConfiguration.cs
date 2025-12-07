@@ -10,29 +10,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasKey(u => u.Id);
 
-        builder.Property(u => u.Nationality)
-            .IsRequired()
-            .HasMaxLength(2);
-
-        builder.Property(u => u.NationalIdentificationNumber)
-            .IsRequired()
-            .HasMaxLength(25);
-
-        builder.Property(u => u.FirstName)
-            .IsRequired()
-            .HasMaxLength(15);
-
-        builder.Property(u => u.LastName)
-            .IsRequired()
-            .HasMaxLength(50);
-
-        builder.Property(u => u.PhoneNumber)
-            .IsRequired()
-            .HasMaxLength(20);
-
-        builder.Property(u => u.HasPhonePrefix)
-            .IsRequired();
-
         builder.Property(u => u.Email)
             .IsRequired()
             .HasMaxLength(50);
@@ -48,10 +25,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.PasswordUpdatedAt)
             .IsRequired(false);
 
-        builder.Property(u => u.Biography)
-            .IsRequired(false)
-            .HasMaxLength(500);
-
         builder.Property(u => u.IsVerified)
             .IsRequired(false);
         
@@ -62,19 +35,16 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         // Indexes
-        builder.HasIndex(u => u.NationalIdentificationNumber)
-            .IsUnique()
-            .HasDatabaseName("unique_index_users_nin");
-
         builder.HasIndex(u => u.Email)
-            .IsUnique()
-            .HasDatabaseName("unique_index_users_email");
+               .IsUnique()
+               .HasDatabaseName("unique_index_users_email");
 
-        builder.HasIndex(u => u.PhoneNumber)
-            .IsUnique()
-            .HasDatabaseName("unique_index_users_phone_number");
-        
         // Relationships
+        builder.HasOne(u => u.UserInfo)
+               .WithOne(ui => ui.User)
+               .HasForeignKey<UserInfo>(ui => ui.Id)
+               .OnDelete(DeleteBehavior.Cascade);
+        
         builder.HasMany(u => u.Photos)
                .WithOne(p => p.User)
                .HasForeignKey(p => p.UserId)

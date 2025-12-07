@@ -14,8 +14,7 @@ public class Program
         builder.Services.AddDbContext<ListedDbContext>(options =>
         {
             var connectionString = builder.Configuration.GetConnectionString("ListedDatabase");
-            options.UseNpgsql(connectionString)
-                .UseSnakeCaseNamingConvention();
+            options.UseNpgsql(connectionString);
         }); 
 
 
