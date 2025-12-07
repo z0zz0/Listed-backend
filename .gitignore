@@ -78,6 +78,7 @@ _ReSharper*/
 *.pdb
 *.mdb
 *.opendb
+**/BuildHost-*
 
 # OS-generated files
 .DS_Store
