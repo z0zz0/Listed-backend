@@ -1,5 +1,5 @@
 using Listed.API.Middleware;
-using Listed.Infrastructure.Persistence;
+using Listed.Infrastructure.Extensions;
 using Serilog;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,15 +11,9 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.Host.UseSerilog((context, loggerConfig) => loggerConfig.ReadFrom.Configuration(context.Configuration));
-        builder.Services.AddDbContext<ListedDbContext>(options =>
-        {
-            var connectionString = builder.Configuration.GetConnectionString("ListedDatabase");
-            options.UseNpgsql(connectionString);
-        }); 
-
+        builder.Services.AddPersistence(builder.Configuration.GetConnectionString("ListedDatabase")); 
 
         var app = builder.Build();
-
         app.UseMiddleware<CorrelationIdMiddleware>();
         app.MapGet("/", () => { Log.Information("Reached endpoint."); return "Hello World!"; });
 
