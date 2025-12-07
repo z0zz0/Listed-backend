@@ -17,6 +17,11 @@ COPY ["src/Listed.Application/Listed.Application.csproj", "src/Listed.Applicatio
 COPY ["src/Listed.Infrastructure/Listed.Infrastructure.csproj", "src/Listed.Infrastructure/"]
 
 RUN dotnet restore "src/Listed.API/Listed.API.csproj"
+
+# Install EF tool for container-side migrations
+RUN dotnet tool install --global dotnet-ef --version 10.0.0
+ENV PATH="$PATH:/root/.dotnet/tools"
+
 COPY . .
 
 WORKDIR /app/Listed.API
