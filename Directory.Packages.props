@@ -3,11 +3,13 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-	<!-- .NET stack -->
-	<PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+	  <!-- .NET stack -->
+	  <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+	  <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
     <!-- Persistence stack -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
-	<PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
+	  <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <!-- Serilog logging stack -->
     <PackageVersion Include="Serilog" Version="4.3.0" />

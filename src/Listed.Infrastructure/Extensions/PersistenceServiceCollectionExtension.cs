@@ -1,5 +1,9 @@
-﻿using Listed.Domain.Enums;
+using Listed.Application.Contracts.Persistence;
+using Listed.Application.Contracts.Security;
+using Listed.Domain.Enums;
 using Listed.Infrastructure.Persistence;
+using Listed.Infrastructure.Persistence.Repositories;
+using Listed.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -20,6 +24,9 @@ public static class PersistenceServiceCollectionExtensions
                 .MigrationsHistoryTable("__EFMigrationsHistory", "listed")
             )
         );
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
         return services;
     }

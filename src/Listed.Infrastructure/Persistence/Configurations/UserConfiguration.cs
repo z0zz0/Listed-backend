@@ -1,4 +1,5 @@
-﻿using Listed.Domain.Entities;
+using Listed.Domain.Entities;
+using Listed.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -37,7 +38,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         // Indexes
         builder.HasIndex(u => u.Email)
                .IsUnique()
-               .HasDatabaseName("unique_index_users_email");
+               .HasDatabaseName(PersistenceConstraintNames.UserEmailUnique);
 
         // Relationships
         builder.HasOne(u => u.UserInfo)
@@ -61,3 +62,4 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
                .OnDelete(DeleteBehavior.Cascade);
     }
 }
+

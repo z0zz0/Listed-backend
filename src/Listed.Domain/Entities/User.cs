@@ -1,4 +1,4 @@
-﻿using Listed.Domain.Exceptions;
+using Listed.Domain.Exceptions;
 
 namespace Listed.Domain.Entities;
 
@@ -22,20 +22,36 @@ public class User
     // EF Core
     private User() { }
 
-    public User(string email)
+    public User(string email, string passwordHash, string passwordAlgorithm)
     {
         if (string.IsNullOrWhiteSpace(email))
         {
             throw new UserDomainException("Email cannot be empty.");
         }
 
-        if (!email.Contains('@')) {
+        if (!email.Contains('@'))
+        {
             throw new UserDomainException("Invalid email format.");
+        }
+
+        if (string.IsNullOrWhiteSpace(passwordHash))
+        {
+            throw new UserDomainException("Password hash cannot be empty.");
+        }
+
+        if (string.IsNullOrWhiteSpace(passwordAlgorithm))
+        {
+            throw new UserDomainException("Password algorithm cannot be empty.");
         }
 
         Id = Guid.NewGuid();
         Email = email.Trim().ToLowerInvariant();
+        PasswordHash = passwordHash;
+        PasswordAlgorithm = passwordAlgorithm;
+        PasswordUpdatedAt = DateTime.UtcNow;
+        IsVerified = false;
         CreatedAt = DateTime.UtcNow;
+        IsSoftDeleted = false;
     }
 
     public void SetUserInfo(UserInfo userInfo)
