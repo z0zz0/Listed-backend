@@ -3,7 +3,7 @@
 public class UserPhoto : Photo
 {
     public Guid UserId { get; private set; }
-    public User User { get; private set; }
+    public User User { get; private set; } = null!;
 
     private UserPhoto() { }
 

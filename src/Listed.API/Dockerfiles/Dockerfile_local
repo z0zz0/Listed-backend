@@ -2,11 +2,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS dev
 WORKDIR /app
 
-ENV ASPNETCORE_URLS=http://+:5000;https://+:5001
+ENV ASPNETCORE_HTTP_PORTS=5000
 ENV DOTNET_USE_POLLING_FILE_WATCHER=1
 
 EXPOSE 5000
-EXPOSE 5001
 
 # COPY props file BEFORE restore so version info is available
 COPY ["Directory.Packages.props", "."]
@@ -25,4 +24,4 @@ ENV PATH="$PATH:/root/.dotnet/tools"
 COPY . .
 
 WORKDIR /app/Listed.API
-ENTRYPOINT ["dotnet", "watch", "run", "--no-launch-profile", "--urls", "http://+:5000"]
+ENTRYPOINT ["dotnet", "watch", "run", "--no-launch-profile"]

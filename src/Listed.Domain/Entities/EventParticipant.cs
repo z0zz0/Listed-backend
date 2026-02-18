@@ -11,8 +11,8 @@ public class EventParticipant
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
 
-    public Event Event { get; private set; }
-    public User User { get; private set; }
+    public Event Event { get; private set; } = null!;
+    public User User { get; private set; } = null!;
 
     private EventParticipant() { }
 }

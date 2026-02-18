@@ -3,7 +3,7 @@
 public abstract class Photo
 {
     public Guid Id { get; private set; }
-    public string Url { get; private set; }
+    public string Url { get; private set; } = null!;
     public int SortOrder { get; private set; }
     public DateTime UploadedAt { get; private set; }
 

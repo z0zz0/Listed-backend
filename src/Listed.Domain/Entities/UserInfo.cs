@@ -3,11 +3,11 @@
 public class UserInfo
 {
     public Guid Id { get; private set; }
-    public string Nationality { get; private set; }
-    public string NationalIdentificationNumber { get; private set; }
-    public string FirstName { get; private set; }
-    public string LastName { get; private set; }
-    public string PhoneNumber { get; private set; }
+    public string Nationality { get; private set; } = null!;
+    public string NationalIdentificationNumber { get; private set; } = null!;
+    public string FirstName { get; private set; } = null!;
+    public string LastName { get; private set; } = null!;
+    public string PhoneNumber { get; private set; } = null!;
     public bool HasPhonePrefix { get; private set; }
     public string? Biography { get; private set; }
 

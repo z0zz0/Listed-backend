@@ -11,8 +11,8 @@ public class OrganisationMember
     public DateTime JoinedAt { get; private set; }
     public DateTime? LeftAt { get; private set; }
 
-    public Organisation Organisation { get; private set; }
-    public User User { get; private set; }
+    public Organisation Organisation { get; private set; } = null!;
+    public User User { get; private set; } = null!;
 
     private OrganisationMember() { }
 }

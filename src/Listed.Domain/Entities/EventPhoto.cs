@@ -3,7 +3,7 @@
 public class EventPhoto : Photo
 {
     public Guid EventId { get; private set; }
-    public Event Event { get; private set; }
+    public Event Event { get; private set; } = null!;
 
     private EventPhoto() { }
 

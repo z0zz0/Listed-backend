@@ -5,9 +5,9 @@ namespace Listed.Domain.Entities;
 public class User
 {
     public Guid Id { get; private set; }
-    public string Email { get; private set; }
-    public string PasswordHash { get; private set; }
-    public string PasswordAlgorithm { get; private set; }
+    public string Email { get; private set; } = null!;
+    public string PasswordHash { get; private set; } = null!;
+    public string PasswordAlgorithm { get; private set; } = null!;
     public DateTime? PasswordUpdatedAt { get; private set; }
     public bool? IsVerified { get; private set; }
     public DateTime CreatedAt { get; private set; }

@@ -3,7 +3,7 @@
 public class OrganisationPhoto : Photo
 {
     public Guid OrganisationId { get; private set; }
-    public Organisation Organisation { get; private set; }
+    public Organisation Organisation { get; private set; } = null!;
     
     private OrganisationPhoto() { }
     

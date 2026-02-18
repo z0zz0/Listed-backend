@@ -13,7 +13,7 @@ public class UsersController(
     ICommandHandler<CreateUserCommand, Result<Guid>> createUserCommandHandler,
     ResultHttpMapper resultHttpMapper) : ControllerBase
 {
-    [HttpPost]
+    [HttpPost(Name = "CreateUser")]
     public async Task<IActionResult> CreateUser(
         [FromBody] CreateUserRequest request,
         CancellationToken cancellationToken)

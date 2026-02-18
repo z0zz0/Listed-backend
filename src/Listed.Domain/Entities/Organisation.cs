@@ -3,9 +3,9 @@
 public class Organisation
 {
     public Guid Id { get; private set; }
-    public string Name { get; private set; }
-    public string Country { get; private set; }
-    public string CorporateIdentityNumber { get; private set; }
+    public string Name { get; private set; } = null!;
+    public string Country { get; private set; } = null!;
+    public string CorporateIdentityNumber { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; }
 
     public ICollection<OrganisationMember> Members { get; private set; } = [];
