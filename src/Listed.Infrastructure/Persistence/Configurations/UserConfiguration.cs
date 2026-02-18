@@ -38,7 +38,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         // Indexes
         builder.HasIndex(u => u.Email)
                .IsUnique()
-               .HasDatabaseName(PersistenceConstraintNames.UserEmailUnique);
+               .HasDatabaseName(PersistenceConstraintNames.User.EmailUnique);
 
         // Relationships
         builder.HasOne(u => u.UserInfo)

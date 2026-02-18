@@ -1,4 +1,5 @@
 ﻿using Listed.Domain.Entities;
+using Listed.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -41,10 +42,10 @@ public class UserInfoConfiguration : IEntityTypeConfiguration<UserInfo>
         // Indexes
         builder.HasIndex(ui => ui.NationalIdentificationNumber)
             .IsUnique()
-            .HasDatabaseName("unique_index_users_nin");
+            .HasDatabaseName(PersistenceConstraintNames.UserInfo.NinUnique);
 
         builder.HasIndex(ui => ui.PhoneNumber)
             .IsUnique()
-            .HasDatabaseName("unique_index_users_phone_number");
+            .HasDatabaseName(PersistenceConstraintNames.UserInfo.PhoneNumberUnique);
     }
 }

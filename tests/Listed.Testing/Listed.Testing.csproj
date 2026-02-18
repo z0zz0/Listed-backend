@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Testcontainers.PostgreSql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Listed.API\Listed.API.csproj" />
+    <ProjectReference Include="..\..\src\Listed.Application\Listed.Application.csproj" />
+    <ProjectReference Include="..\..\src\Listed.Domain\Listed.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

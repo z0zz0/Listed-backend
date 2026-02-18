@@ -1,4 +1,5 @@
 ﻿using Listed.Domain.Entities;
+using Listed.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -28,7 +29,7 @@ public class OrganisationConfiguration : IEntityTypeConfiguration<Organisation>
         // Indexes
         builder.HasIndex(o => new { o.Country, o.CorporateIdentityNumber })
             .IsUnique()
-            .HasDatabaseName("unique_index_organisations_country_cin");
+            .HasDatabaseName(PersistenceConstraintNames.Organisation.CountryCinUnique);
 
         // Relationships
         builder.HasMany(o => o.Members)

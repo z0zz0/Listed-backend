@@ -10,7 +10,7 @@ public sealed class UserRepository(ListedDbContext dbContext) : IUserRepository
     private static readonly IReadOnlyDictionary<string, string> UniqueConstraintCodeByName =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            [PersistenceConstraintNames.UserEmailUnique] = PersistenceConstraintCodes.UserEmailUnique
+            [PersistenceConstraintNames.User.EmailUnique] = PersistenceConstraintCodes.User.EmailUnique
         };
 
     public Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken)
@@ -31,7 +31,7 @@ public sealed class UserRepository(ListedDbContext dbContext) : IUserRepository
             var constraintName = postgresEx.ConstraintName;
             var constraintCode = constraintName is not null && UniqueConstraintCodeByName.TryGetValue(constraintName, out var code)
                 ? code
-                : PersistenceConstraintCodes.UnknownUnique;
+                : PersistenceConstraintCodes.Common.UnknownUnique;
 
             throw new UniqueConstraintViolationException(constraintCode, constraintName);
         }

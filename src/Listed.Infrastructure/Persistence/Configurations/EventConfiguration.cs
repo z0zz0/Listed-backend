@@ -1,4 +1,5 @@
 ﻿using Listed.Domain.Entities;
+using Listed.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -54,7 +55,7 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
 
         // Indexes
         builder.HasIndex(e => e.OrganisationId)
-            .HasDatabaseName("index_events_organisation_id");
+            .HasDatabaseName(PersistenceConstraintNames.Event.OrganisationIdIndex);
 
         // Relationships
         builder.HasMany(e => e.Participants)

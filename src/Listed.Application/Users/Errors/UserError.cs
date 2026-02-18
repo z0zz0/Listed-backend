@@ -1,6 +1,6 @@
 using Listed.Application.Common;
 
-namespace Listed.Application.Errors;
+namespace Listed.Application.Users.Errors;
 
 public class UserError
 {

@@ -1,6 +1,6 @@
-using Listed.API.Abstractions;
+using Listed.API.Contracts;
 using Listed.Application.Common;
-using Listed.Application.Errors;
+using Listed.Application.Users.Errors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Listed.API.Common.ErrorMapping;

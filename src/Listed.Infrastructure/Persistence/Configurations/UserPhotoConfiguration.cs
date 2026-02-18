@@ -1,4 +1,5 @@
 ﻿using Listed.Domain.Entities;
+using Listed.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -25,6 +26,6 @@ public class UserPhotoConfiguration : IEntityTypeConfiguration<UserPhoto>
 
         // Indexes
         builder.HasIndex(up => up.UserId)
-            .HasDatabaseName("index_user_photos_user_id");
+            .HasDatabaseName(PersistenceConstraintNames.UserPhoto.UserIdIndex);
     }
 }

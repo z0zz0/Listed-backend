@@ -1,4 +1,5 @@
 ﻿using Listed.Domain.Entities;
+using Listed.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -27,10 +28,10 @@ public class EventParticipantConfiguration : IEntityTypeConfiguration<EventParti
 
         // Indexes
         builder.HasIndex(ep => ep.EventId)
-            .HasDatabaseName("index_event_participants_event_id");
+            .HasDatabaseName(PersistenceConstraintNames.EventParticipant.EventIdIndex);
         
         builder.HasIndex(ep => new {ep.EventId, ep.UserId})
             .IsUnique()
-            .HasDatabaseName("unique_index_event_participants_event_id_user_id");
+            .HasDatabaseName(PersistenceConstraintNames.EventParticipant.EventUserUnique);
     }
 }

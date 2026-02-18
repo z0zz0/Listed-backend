@@ -2,12 +2,12 @@ using Listed.Application.Contracts.Persistence;
 using Listed.Application.Contracts.Security;
 using Listed.Application.Common;
 using Listed.Application.Contracts.CQRS;
-using Listed.Application.Errors;
-using Listed.Domain.Exceptions;
+using Listed.Application.Users.Errors;
 using Listed.Domain.Entities;
+using Listed.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
 
-namespace Listed.Application.Commands.CreateUser;
+namespace Listed.Application.Users.Commands.CreateUser;
 
 public sealed class CreateUserCommandHandler(
     IUserRepository userRepository,
@@ -54,7 +54,7 @@ public sealed class CreateUserCommandHandler(
 
             return Result<Guid>.Success(user.Id);
         }
-        catch (UniqueConstraintViolationException ex) when (ex.ConstraintCode == PersistenceConstraintCodes.UserEmailUnique)
+        catch (UniqueConstraintViolationException ex) when (ex.ConstraintCode == PersistenceConstraintCodes.User.EmailUnique)
         {
             logger.LogInformation(
                 "CreateUser hit unique constraint conflict. ConstraintCode={ConstraintCode}, ConstraintName={ConstraintName}, Email={Email}",

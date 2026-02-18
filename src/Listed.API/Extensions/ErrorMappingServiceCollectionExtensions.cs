@@ -1,4 +1,4 @@
-using Listed.API.Abstractions;
+using Listed.API.Contracts;
 using Listed.API.Common.ErrorMapping;
 
 namespace Listed.API.Extensions;

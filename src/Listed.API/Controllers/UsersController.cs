@@ -1,7 +1,8 @@
 using Listed.Application.Contracts.CQRS;
-using Listed.Application.Commands.CreateUser;
+using Listed.Application.Users.Commands.CreateUser;
 using Listed.Application.Common;
 using Listed.API.Common.ErrorMapping;
+using Listed.API.Contracts.Users;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Listed.API.Controllers;
@@ -25,6 +26,3 @@ public class UsersController(
             error => resultHttpMapper.ToFailureActionResult(this, error));
     }
 }
-
-public sealed record CreateUserRequest(string Email, string Password);
-public sealed record CreateUserResponse(Guid Id);

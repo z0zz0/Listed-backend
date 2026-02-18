@@ -1,4 +1,5 @@
 ﻿using Listed.Domain.Entities;
+using Listed.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -28,6 +29,6 @@ public class OrganisationMemberConfiguration : IEntityTypeConfiguration<Organisa
         // Indexes
         builder.HasIndex(om => new { om.OrganisationId, om.UserId})
             .IsUnique()
-            .HasDatabaseName("unique_index_organisation_members_organisation_id_user_id");
+            .HasDatabaseName(PersistenceConstraintNames.OrganisationMember.OrganisationUserUnique);
     }
 }

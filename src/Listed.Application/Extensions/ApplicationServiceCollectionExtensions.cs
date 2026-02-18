@@ -1,6 +1,6 @@
 using Listed.Application.Contracts.CQRS;
 using Listed.Application.Common;
-using Listed.Application.Commands.CreateUser;
+using Listed.Application.Users.Commands.CreateUser;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Listed.Application.Extensions;

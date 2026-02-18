@@ -1,4 +1,5 @@
 ﻿using Listed.Domain.Entities;
+using Listed.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -25,6 +26,6 @@ public class OrganisationPhotoConfiguration : IEntityTypeConfiguration<Organisat
 
         // Indexes
         builder.HasIndex(op => op.OrganisationId)
-            .HasDatabaseName("index_organisation_photos_organisation_id");
+            .HasDatabaseName(PersistenceConstraintNames.OrganisationPhoto.OrganisationIdIndex);
     }
 }

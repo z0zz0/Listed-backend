@@ -1,4 +1,5 @@
 ﻿using Listed.Domain.Entities;
+using Listed.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -25,6 +26,6 @@ public class EventPhotoConfiguration : IEntityTypeConfiguration<EventPhoto>
 
         // Indexes
         builder.HasIndex(ep => ep.EventId)
-            .HasDatabaseName("index_event_photos_event_id");
+            .HasDatabaseName(PersistenceConstraintNames.EventPhoto.EventIdIndex);
     }
 }
