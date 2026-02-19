@@ -17,7 +17,10 @@ public sealed class GetUserByEmailQueryHandler(
         var emailResult = UserUtils.NormalizeAndValidateEmail(query.Email);
         if (emailResult.IsFailure)
         {
-            logger.LogInformation("GetUserByEmail validation failed with error code {ErrorCode}", emailResult.Error.Code);
+            logger.LogInformation("GetUserByEmail validation failed with error code {ErrorCode}. Email={Email}", 
+            emailResult.Error.Code,
+            query.Email);
+            
             return Result<GetUserResult>.Failure(emailResult.Error);
         }
 

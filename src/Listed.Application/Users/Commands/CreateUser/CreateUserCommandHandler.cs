@@ -24,8 +24,9 @@ public sealed class CreateUserCommandHandler(
         if (validationResult.IsFailure)
         {
             logger.LogWarning(
-                "CreateUser validation failed with error code {ErrorCode}",
-                validationResult.Error.Code);
+                "CreateUser validation failed with error code {ErrorCode}. Email={Email}",
+                validationResult.Error.Code,
+                command.Email);
 
             return Result<CreateUserResult>.Failure(validationResult.Error);
         }
