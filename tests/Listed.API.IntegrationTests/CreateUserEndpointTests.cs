@@ -41,6 +41,7 @@ public sealed class CreateUserEndpointTests : IClassFixture<ApiWebApplicationFac
         using var document = JsonDocument.Parse(body);
         Assert.True(document.RootElement.TryGetProperty("id", out var idElement));
         Assert.True(Guid.TryParse(idElement.GetString(), out _));
+        Assert.Equal(payload.Email.Trim().ToLowerInvariant(), document.RootElement.GetProperty("email").GetString());
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ListedDbContext>();
@@ -95,5 +96,23 @@ public sealed class CreateUserEndpointTests : IClassFixture<ApiWebApplicationFac
 
         using var document = JsonDocument.Parse(body);
         Assert.Equal("User.Conflict.EmailAlreadyInUse", document.RootElement.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task PostUsers_NormalizesEmail_AndSupportsLookupByNormalizedEmail()
+    {
+        using var client = _factory.CreateClient();
+        var payload = CreateUserRequestFactory.Valid(email: "  Mixed.Case@Test.IO  ");
+
+        var createResponse = await client.PostAsJsonAsync("/api/users", payload);
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        var lookupResponse = await client.GetAsync("/api/users/by-email?email=mixed.case@test.io");
+        var lookupBody = await lookupResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, lookupResponse.StatusCode);
+
+        using var document = JsonDocument.Parse(lookupBody);
+        Assert.Equal("mixed.case@test.io", document.RootElement.GetProperty("email").GetString());
     }
 }

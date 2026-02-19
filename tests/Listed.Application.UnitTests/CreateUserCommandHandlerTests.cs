@@ -90,12 +90,14 @@ public sealed class CreateUserCommandHandlerTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.NotEqual(Guid.Empty, result.Value);
+        Assert.NotNull(result.Value);
+        Assert.NotEqual(Guid.Empty, result.Value!.Id);
+        Assert.Equal("new@test.io", result.Value.Email);
 
         Assert.NotNull(persistedUser);
         Assert.Equal("new@test.io", persistedUser!.Email);
         Assert.Equal("bcrypt", persistedUser.PasswordAlgorithm);
-        Assert.Equal(result.Value, persistedUser.Id);
+        Assert.Equal(result.Value.Id, persistedUser.Id);
     }
 
     [Fact]

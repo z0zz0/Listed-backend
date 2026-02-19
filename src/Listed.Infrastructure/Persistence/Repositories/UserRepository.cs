@@ -18,6 +18,15 @@ public sealed class UserRepository(ListedDbContext dbContext) : IUserRepository
         return dbContext.Users.AnyAsync(u => u.Email == email, cancellationToken);
     }
 
+    public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        return dbContext.Users
+            .AsNoTracking()
+            .Include(u => u.UserInfo)
+            .Include(u => u.Photos)
+            .SingleOrDefaultAsync(u => u.Email == email, cancellationToken);
+    }
+
     public async Task AddAsync(User user, CancellationToken cancellationToken)
     {
         await dbContext.Users.AddAsync(user, cancellationToken);

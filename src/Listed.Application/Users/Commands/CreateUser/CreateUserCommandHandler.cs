@@ -2,7 +2,9 @@ using Listed.Application.Contracts.Persistence;
 using Listed.Application.Contracts.Security;
 using Listed.Application.Common;
 using Listed.Application.Contracts.CQRS;
+using Listed.Application.Users.Common;
 using Listed.Application.Users.Errors;
+using Listed.Application.Users.Results;
 using Listed.Domain.Entities;
 using Listed.Domain.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -12,11 +14,11 @@ namespace Listed.Application.Users.Commands.CreateUser;
 public sealed class CreateUserCommandHandler(
     IUserRepository userRepository,
     IPasswordHasher passwordHasher,
-    ILogger<CreateUserCommandHandler> logger) : ICommandHandler<CreateUserCommand, Result<Guid>>
+    ILogger<CreateUserCommandHandler> logger) : ICommandHandler<CreateUserCommand, Result<CreateUserResult>>
 {
     private const int MinPasswordLength = 8;
 
-    public async Task<Result<Guid>> Handle(CreateUserCommand command, CancellationToken cancellationToken)
+    public async Task<Result<CreateUserResult>> Handle(CreateUserCommand command, CancellationToken cancellationToken)
     {
         var validationResult = ValidateCreateUserCommand(command);
         if (validationResult.IsFailure)
@@ -25,7 +27,7 @@ public sealed class CreateUserCommandHandler(
                 "CreateUser validation failed with error code {ErrorCode}",
                 validationResult.Error.Code);
 
-            return Result<Guid>.Failure(validationResult.Error);
+            return Result<CreateUserResult>.Failure(validationResult.Error);
         }
 
         var normalizedEmail = validationResult.Value!;
@@ -36,7 +38,7 @@ public sealed class CreateUserCommandHandler(
                 "CreateUser rejected because email already exists. Email={Email}",
                 normalizedEmail);
 
-            return Result<Guid>.Failure(UserError.EmailAlreadyInUse(normalizedEmail));
+            return Result<CreateUserResult>.Failure(UserError.EmailAlreadyInUse(normalizedEmail));
         }
 
         try
@@ -52,7 +54,7 @@ public sealed class CreateUserCommandHandler(
                 user.Email,
                 user.PasswordAlgorithm);
 
-            return Result<Guid>.Success(user.Id);
+            return Result<CreateUserResult>.Success(new CreateUserResult(user.Id, user.Email));
         }
         catch (UniqueConstraintViolationException ex) when (ex.ConstraintCode == PersistenceConstraintCodes.User.EmailUnique)
         {
@@ -62,7 +64,7 @@ public sealed class CreateUserCommandHandler(
                 ex.ConstraintName,
                 normalizedEmail);
 
-            return Result<Guid>.Failure(UserError.EmailAlreadyInUse(normalizedEmail));
+            return Result<CreateUserResult>.Failure(UserError.EmailAlreadyInUse(normalizedEmail));
         }
         catch (UserDomainException ex)
         {
@@ -71,34 +73,28 @@ public sealed class CreateUserCommandHandler(
                 "CreateUser failed with domain validation error for Email={Email}",
                 normalizedEmail);
 
-            return Result<Guid>.Failure(UserError.InvalidUserData(ex.Message));
+            return Result<CreateUserResult>.Failure(UserError.InvalidUserData(ex.Message));
         }
     }
 
     private static Result<string> ValidateCreateUserCommand(CreateUserCommand command)
     {
-        if (string.IsNullOrWhiteSpace(command.Email))
+        var emailResult = UserUtils.NormalizeAndValidateEmail(command.Email);
+        if (emailResult.IsFailure)
         {
-            return Result<string>.Failure(UserError.InvalidEmail());
+            return Result<string>.Failure(emailResult.Error);
         }
 
         if (string.IsNullOrWhiteSpace(command.Password))
         {
             return Result<string>.Failure(UserError.InvalidPassword());
         }
-
-        var normalizedEmail = command.Email.Trim().ToLowerInvariant();
-
-        if (!normalizedEmail.Contains('@'))
-        {
-            return Result<string>.Failure(UserError.InvalidEmail());
-        }
-
+        
         if (command.Password.Length < MinPasswordLength)
         {
             return Result<string>.Failure(UserError.InvalidPasswordTooShort(MinPasswordLength));
         }
 
-        return Result<string>.Success(normalizedEmail);
+        return emailResult;
     }
 }

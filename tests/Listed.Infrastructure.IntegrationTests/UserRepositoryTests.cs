@@ -71,4 +71,51 @@ public sealed class UserRepositoryTests : IClassFixture<InfrastructureDatabaseFi
         Assert.Equal(PersistenceConstraintCodes.User.EmailUnique, exception.ConstraintCode);
         Assert.Equal(PersistenceConstraintNames.User.EmailUnique, exception.ConstraintName);
     }
+
+    [Fact]
+    public async Task GetByEmailAsync_WhenUserExists_ReturnsUserWithUserInfoAndPhotos()
+    {
+        var seededUser = UserFactory.Valid(
+            email: "infra.get@test.io",
+            passwordHash: "hash",
+            algorithm: "bcrypt",
+            includeUserInfo: true,
+            photoCount: 2);
+
+        await using (var seedContext = _fixture.CreateDbContext())
+        {
+            await seedContext.Users.AddAsync(seededUser);
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var queryContext = _fixture.CreateDbContext();
+        var repository = new UserRepository(queryContext);
+
+        var found = await repository.GetByEmailAsync("infra.get@test.io", CancellationToken.None);
+
+        Assert.NotNull(found);
+        Assert.Equal("infra.get@test.io", found!.Email);
+
+        Assert.NotNull(found.UserInfo);
+        Assert.Equal("SE", found.UserInfo.Nationality);
+        Assert.Equal("John", found.UserInfo.FirstName);
+        Assert.Equal("Doe", found.UserInfo.LastName);
+        Assert.Equal("0700000000", found.UserInfo.PhoneNumber);
+        Assert.True(found.UserInfo.HasPhonePrefix);
+
+        Assert.Equal(2, found.Photos.Count);
+        Assert.Contains(found.Photos, p => p.SortOrder == 1);
+        Assert.Contains(found.Photos, p => p.SortOrder == 2);
+    }
+
+    [Fact]
+    public async Task GetByEmailAsync_WhenUserDoesNotExist_ReturnsNull()
+    {
+        await using var queryContext = _fixture.CreateDbContext();
+        var repository = new UserRepository(queryContext);
+
+        var found = await repository.GetByEmailAsync("infra.missing@test.io", CancellationToken.None);
+
+        Assert.Null(found);
+    }
 }

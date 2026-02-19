@@ -10,6 +10,7 @@ public class UserError
     public const string InvalidUserDataCode = "User.Validation.InvalidUserData";
     public const string EmailAlreadyInUseCode = "User.Conflict.EmailAlreadyInUse";
     public const string UserNotFoundByIdCode = "User.NotFound.ById";
+    public const string UserNotFoundByEmailCode = "User.NotFound.ByEmail";
     public const string UserNotFoundByUserNameCode = "User.NotFound.ByUserName";
 
     public static Error InvalidEmail() =>
@@ -30,6 +31,9 @@ public class UserError
     public static Error UserNotFoundById(Guid id) =>
         new(UserNotFoundByIdCode, $"User with ID '{id}' was not found.");
 
+    public static Error UserNotFoundByEmail(string email) =>
+        new(UserNotFoundByEmailCode, $"User with email '{email}' was not found.");
+
     public static Error UserNotFoundByUserName(string userName) =>
         new(UserNotFoundByUserNameCode, $"User with username '{userName}' was not found.");
 
@@ -41,5 +45,6 @@ public class UserError
 
     public static bool IsNotFoundCode(string code) =>
         code is UserNotFoundByIdCode
+            or UserNotFoundByEmailCode
             or UserNotFoundByUserNameCode;
 }
