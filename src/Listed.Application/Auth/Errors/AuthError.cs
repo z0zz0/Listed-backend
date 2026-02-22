@@ -11,7 +11,6 @@ public static class AuthError
     public const string InvalidRefreshTokenCode = "Auth.Unauthorized.InvalidRefreshToken";
     public const string ExpiredRefreshTokenCode = "Auth.Unauthorized.ExpiredRefreshToken";
     public const string ReusedRefreshTokenCode = "Auth.Unauthorized.ReusedRefreshToken";
-    public const string AlreadyLoggedInOnThisDeviceCode = "Auth.Conflict.AlreadyLoggedInOnThisDevice";
     public const string UserNotFoundCode = "Auth.NotFound.User";
     public const string TokenGenerationFailedCode = "Auth.Internal.TokenGenerationFailed";
 
@@ -36,9 +35,6 @@ public static class AuthError
     public static Error ReusedRefreshToken() =>
         new(ReusedRefreshTokenCode, "Refresh token was already used.");
 
-    public static Error AlreadyLoggedInOnThisDevice() =>
-        new(AlreadyLoggedInOnThisDeviceCode, "An active session already exists on this device.");
-
     public static Error UserNotFound(Guid userId) =>
         new(UserNotFoundCode, $"User with id '{userId}' was not found.");
 
@@ -56,6 +52,4 @@ public static class AuthError
             or ExpiredRefreshTokenCode
             or ReusedRefreshTokenCode;
 
-    public static bool IsConflictCode(string code) =>
-        code is AlreadyLoggedInOnThisDeviceCode;
 }

@@ -126,13 +126,12 @@ public sealed class LoginCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenActiveSessionExistsOnSameDeviceAndCookieMatches_ReturnsIdempotentSuccess()
+    public async Task Handle_WhenActiveSessionExistsOnSameDeviceAndCookieMissing_RotatesSessionAndReturnsSuccess()
     {
         var now = DateTime.UtcNow;
         var deviceId = Guid.NewGuid();
         var user = UserFactory.Valid(email: "dupe@test.io", passwordHash: "stored-hash", algorithm: "bcrypt");
-        var existingRefreshToken = "existing-refresh-token";
-        var existingRefreshTokenHash = "active-hash";
+        var existingRefreshTokenHash = "existing-active-hash";
         var activeToken = new RefreshToken(
             user.Id,
             deviceId,
@@ -159,14 +158,20 @@ public sealed class LoginCommandHandlerTests
             .Setup(x => x.Create(user.Id, user.Email, user.AuthInfo.AuthVersion, It.IsAny<DateTime>()))
             .Returns(new AccessTokenResult("access-token", now.AddMinutes(15), 900));
         refreshTokenService
-            .Setup(x => x.HashToken(existingRefreshToken))
-            .Returns(existingRefreshTokenHash);
+            .Setup(x => x.GenerateToken())
+            .Returns("new-refresh-token");
+        refreshTokenService
+            .Setup(x => x.HashToken("new-refresh-token"))
+            .Returns("new-refresh-token-hash");
         refreshTokenRepository
             .Setup(x => x.RevokeExpiredByUserAndDeviceAsync(user.Id, deviceId, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0);
         refreshTokenRepository
             .Setup(x => x.GetActiveByUserAndDeviceAsync(user.Id, deviceId, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(activeToken);
+        refreshTokenRepository
+            .Setup(x => x.RotateAsync(activeToken.Id, It.IsAny<RefreshToken>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var handler = CreateHandler(
             userRepository,
@@ -176,14 +181,17 @@ public sealed class LoginCommandHandlerTests
             refreshTokenService,
             authSettings);
 
-        var command = new LoginCommand("dupe@test.io", "StrongPass123!", deviceId, existingRefreshToken, "127.0.0.1", "unit-test");
+        var command = new LoginCommand("dupe@test.io", "StrongPass123!", deviceId, null, "127.0.0.1", "unit-test");
         var result = await handler.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
         Assert.Equal("access-token", result.Value!.AccessToken.Token);
-        Assert.Equal(existingRefreshToken, result.Value.RefreshToken);
-        Assert.Equal(activeToken.ExpiresAt, result.Value.RefreshTokenExpiresAtUtc);
+        Assert.Equal("new-refresh-token", result.Value.RefreshToken);
+        Assert.True(result.Value.RefreshTokenExpiresAtUtc > now);
+        refreshTokenRepository.Verify(
+            x => x.RotateAsync(activeToken.Id, It.IsAny<RefreshToken>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()),
+            Times.Once);
         refreshTokenRepository.Verify(x => x.AddAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

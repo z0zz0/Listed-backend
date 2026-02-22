@@ -12,7 +12,6 @@ public sealed class AuthErrorHttpMapper : IErrorHttpMapper
         return errorCode == AuthError.UserNotFoundCode
                || errorCode == AuthError.TokenGenerationFailedCode
                || AuthError.IsValidationCode(errorCode)
-               || AuthError.IsConflictCode(errorCode)
                || AuthError.IsUnauthorizedCode(errorCode);
     }
 
@@ -26,11 +25,6 @@ public sealed class AuthErrorHttpMapper : IErrorHttpMapper
         if (AuthError.IsUnauthorizedCode(error.Code))
         {
             return controller.Unauthorized(new { error.Code, error.Message });
-        }
-
-        if (AuthError.IsConflictCode(error.Code))
-        {
-            return controller.Conflict(new { error.Code, error.Message });
         }
 
         if (error.Code == AuthError.UserNotFoundCode)

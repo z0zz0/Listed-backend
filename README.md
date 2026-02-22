@@ -168,8 +168,8 @@ When adding a new feature, follow this order:
   - `GET /api/users/by-email?email=...`
 - Login:
   - `POST /api/auth/login`
-  - Validates credentials, issues access token, writes refresh-token cookie.
-  - Device-scoped idempotent behavior on same active session.
+  - Validates credentials, issues access token, and creates/rotates the device refresh session.
+  - Writes refresh-token cookie for the current session.
 - Refresh access token:
   - `POST /api/auth/refresh`
   - Rotates refresh token and returns new access token.

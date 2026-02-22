@@ -39,19 +39,14 @@ public sealed class LoginCommandHandler(
             utcNow,
             cancellationToken);
 
-        if (activeDeviceSession is not null)
-        {
-            var idempotentReuseResult = TryReuseActiveDeviceSession(user, activeDeviceSession, command, utcNow);
-            if (idempotentReuseResult.IsSuccess)
-            {
-                return Result<AuthTokensResult>.Success(idempotentReuseResult.Value!);
-            }
-
-            return Result<AuthTokensResult>.Failure(idempotentReuseResult.Error);
-        }
-
         var accessToken = accessTokenService.Create(user.Id, user.Email, user.AuthInfo.AuthVersion, utcNow);
-        var refreshCreationResult = await CreateRefreshTokenAsync(user, command.DeviceId, utcNow, command, cancellationToken);
+        var refreshCreationResult = await IssueRefreshTokenSessionAsync(
+            user,
+            activeDeviceSession,
+            utcNow,
+            command,
+            cancellationToken);
+
         if (refreshCreationResult.IsFailure)
         {
             return Result<AuthTokensResult>.Failure(refreshCreationResult.Error);
@@ -67,9 +62,9 @@ public sealed class LoginCommandHandler(
             created.Entity.ExpiresAt));
     }
 
-    private async Task<Result<(RefreshToken Entity, string PlainToken)>> CreateRefreshTokenAsync(
+    private async Task<Result<(RefreshToken Entity, string PlainToken)>> IssueRefreshTokenSessionAsync(
         User user,
-        Guid deviceId,
+        RefreshToken? activeDeviceSession,
         DateTime utcNow,
         LoginCommand command,
         CancellationToken cancellationToken)
@@ -81,7 +76,7 @@ public sealed class LoginCommandHandler(
 
             var refreshToken = new RefreshToken(
                 user.Id,
-                deviceId,
+                command.DeviceId,
                 tokenHash,
                 utcNow,
                 utcNow.Add(authSettings.RefreshTokenLifetime),
@@ -90,46 +85,74 @@ public sealed class LoginCommandHandler(
 
             try
             {
-                await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
+                if (activeDeviceSession is null)
+                {
+                    await refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
+                }
+                else
+                {
+                    var rotated = await refreshTokenRepository.RotateAsync(
+                        activeDeviceSession.Id,
+                        refreshToken,
+                        utcNow,
+                        cancellationToken);
+
+                    if (!rotated)
+                    {
+                        logger.LogInformation(
+                            "Login rotate attempt did not update active session. Retrying. UserId={UserId}, DeviceId={DeviceId}, Attempt={Attempt}",
+                            user.Id,
+                            command.DeviceId,
+                            attempt);
+
+                        activeDeviceSession = await refreshTokenRepository.GetActiveByUserAndDeviceAsync(
+                            user.Id,
+                            command.DeviceId,
+                            utcNow,
+                            cancellationToken);
+
+                        continue;
+                    }
+                }
+
                 return Result<(RefreshToken Entity, string PlainToken)>.Success((refreshToken, plainToken));
             }
             catch (UniqueConstraintViolationException ex)
-                when (ex.ConstraintCode == PersistenceConstraintCodes.RefreshToken.UserDeviceActiveUnique)
+                when (ex.ConstraintCode == PersistenceConstraintCodes.RefreshToken.TokenHashUnique)
             {
-                logger.LogInformation(
-                    "Login detected concurrent active device session due to uniqueness constraint. UserId={UserId}, DeviceId={DeviceId}, Constraint={ConstraintName}",
-                    user.Id,
-                    deviceId,
-                    ex.ConstraintName);
-
-                var activeDeviceSession = await refreshTokenRepository.GetActiveByUserAndDeviceAsync(
-                    user.Id,
-                    deviceId,
-                    utcNow,
-                    cancellationToken);
-
-                if (activeDeviceSession is not null
-                    && TryReuseActiveDeviceSession(user, activeDeviceSession, command, utcNow).IsSuccess)
+                if (attempt == MaxRefreshTokenGenerationAttempts)
                 {
-                    return Result<(RefreshToken Entity, string PlainToken)>.Success((
-                        activeDeviceSession,
-                        command.CurrentRefreshToken!));
+                    break;
                 }
 
-                return Result<(RefreshToken Entity, string PlainToken)>.Failure(AuthError.AlreadyLoggedInOnThisDevice());
-            }
-            catch (UniqueConstraintViolationException ex)
-                when (ex.ConstraintCode == PersistenceConstraintCodes.RefreshToken.TokenHashUnique
-                      && attempt < MaxRefreshTokenGenerationAttempts)
-            {
                 logger.LogWarning(
                     "Refresh token hash collision during login. Attempt={Attempt}, Constraint={ConstraintName}",
                     attempt,
                     ex.ConstraintName);
             }
+            catch (UniqueConstraintViolationException ex)
+                when (ex.ConstraintCode == PersistenceConstraintCodes.RefreshToken.UserDeviceActiveUnique)
+            {
+                if (attempt == MaxRefreshTokenGenerationAttempts)
+                {
+                    break;
+                }
+
+                logger.LogInformation(
+                    "Login detected concurrent active device session due to uniqueness constraint. Retrying as rotate/create. UserId={UserId}, DeviceId={DeviceId}, Constraint={ConstraintName}",
+                    user.Id,
+                    command.DeviceId,
+                    ex.ConstraintName);
+
+                activeDeviceSession = await refreshTokenRepository.GetActiveByUserAndDeviceAsync(
+                    user.Id,
+                    command.DeviceId,
+                    utcNow,
+                    cancellationToken);
+            }
         }
 
-        logger.LogError("Refresh token creation failed after maximum retries for UserId={UserId}", user.Id);
+        logger.LogError("Refresh token issuance failed after maximum retries for UserId={UserId}", user.Id);
         return Result<(RefreshToken Entity, string PlainToken)>.Failure(AuthError.TokenGenerationFailed());
     }
 
@@ -163,46 +186,6 @@ public sealed class LoginCommandHandler(
         }
 
         return Result<User>.Success(user);
-    }
-
-    private Result<AuthTokensResult> TryReuseActiveDeviceSession(
-        User user,
-        RefreshToken activeDeviceSession,
-        LoginCommand command,
-        DateTime utcNow)
-    {
-        if (string.IsNullOrWhiteSpace(command.CurrentRefreshToken))
-        {
-            logger.LogInformation(
-                "Login rejected because active session exists but request did not include refresh cookie. UserId={UserId}, DeviceId={DeviceId}",
-                user.Id,
-                command.DeviceId);
-
-            return Result<AuthTokensResult>.Failure(AuthError.AlreadyLoggedInOnThisDevice());
-        }
-
-        var currentRefreshTokenHash = refreshTokenService.HashToken(command.CurrentRefreshToken);
-        if (!string.Equals(currentRefreshTokenHash, activeDeviceSession.TokenHash, StringComparison.Ordinal))
-        {
-            logger.LogInformation(
-                "Login rejected because refresh cookie does not match active device session. UserId={UserId}, DeviceId={DeviceId}",
-                user.Id,
-                command.DeviceId);
-
-            return Result<AuthTokensResult>.Failure(AuthError.AlreadyLoggedInOnThisDevice());
-        }
-
-        var accessToken = accessTokenService.Create(user.Id, user.Email, user.AuthInfo!.AuthVersion, utcNow);
-
-        logger.LogInformation(
-            "Login treated as idempotent for active device session. UserId={UserId}, DeviceId={DeviceId}",
-            user.Id,
-            command.DeviceId);
-
-        return Result<AuthTokensResult>.Success(new AuthTokensResult(
-            accessToken,
-            command.CurrentRefreshToken,
-            activeDeviceSession.ExpiresAt));
     }
 
     private static Result<string> NormalizeAndValidateEmail(string? email)
