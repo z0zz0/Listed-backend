@@ -7,6 +7,7 @@ public static class ErrorMappingServiceCollectionExtensions
 {
     public static IServiceCollection AddErrorMapping(this IServiceCollection services)
     {
+        services.AddScoped<IErrorHttpMapper, AuthErrorHttpMapper>();
         services.AddScoped<IErrorHttpMapper, UserErrorHttpMapper>();
         services.AddScoped<ResultHttpMapper>();
 

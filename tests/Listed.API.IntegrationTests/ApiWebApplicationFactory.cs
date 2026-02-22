@@ -13,6 +13,7 @@ namespace Listed.API.IntegrationTests;
 public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgresTestDatabase _database = new("listed_test");
+    private readonly ValkeyTestDatabase _valkey = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -22,7 +23,13 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>, I
         {
             configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:ListedDatabase"] = _database.ConnectionString
+                ["ConnectionStrings:ListedDatabase"] = _database.ConnectionString,
+                ["ConnectionStrings:Valkey"] = _valkey.ConnectionString,
+                ["Auth:SigningKey"] = "listed-integration-tests-signing-key-123456789",
+                ["DataProtection:ApplicationName"] = "listed-api-integration-tests",
+                ["DataProtection:KeyRingKey"] = "listed:dpkeys:integration-tests",
+                ["DataProtection:CertificatePath"] = string.Empty,
+                ["DataProtection:CertificatePassword"] = string.Empty
             });
         });
     }
@@ -30,9 +37,29 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>, I
     public async Task InitializeAsync()
     {
         await _database.StartAsync();
+        await _valkey.StartAsync();
+
         Environment.SetEnvironmentVariable(
             "ConnectionStrings__ListedDatabase",
             _database.ConnectionString);
+        Environment.SetEnvironmentVariable(
+            "ConnectionStrings__Valkey",
+            _valkey.ConnectionString);
+        Environment.SetEnvironmentVariable(
+            "Auth__SigningKey",
+            "listed-integration-tests-signing-key-123456789");
+        Environment.SetEnvironmentVariable(
+            "DataProtection__ApplicationName",
+            "listed-api-integration-tests");
+        Environment.SetEnvironmentVariable(
+            "DataProtection__KeyRingKey",
+            "listed:dpkeys:integration-tests");
+        Environment.SetEnvironmentVariable(
+            "DataProtection__CertificatePath",
+            string.Empty);
+        Environment.SetEnvironmentVariable(
+            "DataProtection__CertificatePassword",
+            string.Empty);
 
         using var scope = Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ListedDbContext>();
@@ -62,6 +89,13 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>, I
     async Task IAsyncLifetime.DisposeAsync()
     {
         Environment.SetEnvironmentVariable("ConnectionStrings__ListedDatabase", null);
+        Environment.SetEnvironmentVariable("ConnectionStrings__Valkey", null);
+        Environment.SetEnvironmentVariable("Auth__SigningKey", null);
+        Environment.SetEnvironmentVariable("DataProtection__ApplicationName", null);
+        Environment.SetEnvironmentVariable("DataProtection__KeyRingKey", null);
+        Environment.SetEnvironmentVariable("DataProtection__CertificatePath", null);
+        Environment.SetEnvironmentVariable("DataProtection__CertificatePassword", null);
+        await _valkey.DisposeAsync();
         await _database.DisposeAsync();
         await base.DisposeAsync();
     }

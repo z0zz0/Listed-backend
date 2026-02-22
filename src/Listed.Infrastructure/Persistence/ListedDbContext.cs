@@ -7,6 +7,8 @@ namespace Listed.Infrastructure.Persistence;
 public class ListedDbContext(DbContextOptions<ListedDbContext> options) : DbContext(options)
 {
     public DbSet<User> Users => Set<User>();
+    public DbSet<AuthInfo> AuthInfos => Set<AuthInfo>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<UserInfo> UserInfos => Set<UserInfo>();
     public DbSet<UserPhoto> UserPhotos => Set<UserPhoto>();
 

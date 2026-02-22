@@ -13,6 +13,7 @@ public class User
     public DateTime CreatedAt { get; private set; }
     public bool IsSoftDeleted { get; private set; }
     
+    public AuthInfo AuthInfo { get; private set; } = null!;
     public UserInfo UserInfo { get; private set; } = null!;
 
     public ICollection<UserPhoto> Photos { get; private set; } = [];
@@ -52,6 +53,7 @@ public class User
         IsVerified = false;
         CreatedAt = DateTime.UtcNow;
         IsSoftDeleted = false;
+        AuthInfo = new AuthInfo(Id);
     }
 
     public void SetUserInfo(UserInfo userInfo)

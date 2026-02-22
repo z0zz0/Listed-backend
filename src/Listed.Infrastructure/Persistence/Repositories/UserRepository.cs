@@ -30,6 +30,11 @@ public sealed class UserRepository(ListedDbContext dbContext) : IUserRepository
     public async Task AddAsync(User user, CancellationToken cancellationToken)
     {
         await dbContext.Users.AddAsync(user, cancellationToken);
+        await SaveChangesWithUniqueConstraintMapping(cancellationToken);
+    }
+
+    private async Task SaveChangesWithUniqueConstraintMapping(CancellationToken cancellationToken)
+    {
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);

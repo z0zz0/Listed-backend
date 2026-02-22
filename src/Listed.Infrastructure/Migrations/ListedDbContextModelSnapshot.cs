@@ -27,6 +27,24 @@ namespace Listed.Infrastructure.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "listed", "participation_status", new[] { "accepted", "invited", "rejected", "requested" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Listed.Domain.Entities.AuthInfo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int>("AuthVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("auth_version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_auth_infos");
+
+                    b.ToTable("auth_infos", "listed");
+                });
+
             modelBuilder.Entity("Listed.Domain.Entities.Event", b =>
                 {
                     b.Property<Guid>("Id")
@@ -290,6 +308,71 @@ namespace Listed.Infrastructure.Migrations
                     b.ToTable("organisation_photos", "listed");
                 });
 
+            modelBuilder.Entity("Listed.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedByIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("created_by_ip");
+
+                    b.Property<string>("CreatedByUserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("created_by_user_agent");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("device_id");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid?>("ReplacedByTokenId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("replaced_by_token_id");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_refresh_tokens");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("unique_index_refresh_tokens_token_hash");
+
+                    b.HasIndex("UserId", "DeviceId")
+                        .IsUnique()
+                        .HasDatabaseName("unique_index_refresh_tokens_user_id_device_id_active")
+                        .HasFilter("\"revoked_at\" IS NULL");
+
+                    b.HasIndex("UserId", "RevokedAt")
+                        .HasDatabaseName("index_refresh_tokens_user_id_revoked_at");
+
+                    b.ToTable("refresh_tokens", "listed");
+                });
+
             modelBuilder.Entity("Listed.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -434,6 +517,18 @@ namespace Listed.Infrastructure.Migrations
                     b.ToTable("user_photos", "listed");
                 });
 
+            modelBuilder.Entity("Listed.Domain.Entities.AuthInfo", b =>
+                {
+                    b.HasOne("Listed.Domain.Entities.User", "User")
+                        .WithOne("AuthInfo")
+                        .HasForeignKey("Listed.Domain.Entities.AuthInfo", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_auth_infos__users_id");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Listed.Domain.Entities.Event", b =>
                 {
                     b.HasOne("Listed.Domain.Entities.Organisation", "Organisation")
@@ -512,6 +607,18 @@ namespace Listed.Infrastructure.Migrations
                     b.Navigation("Organisation");
                 });
 
+            modelBuilder.Entity("Listed.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("Listed.Domain.Entities.AuthInfo", "AuthInfo")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_refresh_tokens_auth_infos_user_id");
+
+                    b.Navigation("AuthInfo");
+                });
+
             modelBuilder.Entity("Listed.Domain.Entities.UserInfo", b =>
                 {
                     b.HasOne("Listed.Domain.Entities.User", "User")
@@ -536,6 +643,11 @@ namespace Listed.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Listed.Domain.Entities.AuthInfo", b =>
+                {
+                    b.Navigation("RefreshTokens");
+                });
+
             modelBuilder.Entity("Listed.Domain.Entities.Event", b =>
                 {
                     b.Navigation("Participants");
@@ -554,6 +666,9 @@ namespace Listed.Infrastructure.Migrations
 
             modelBuilder.Entity("Listed.Domain.Entities.User", b =>
                 {
+                    b.Navigation("AuthInfo")
+                        .IsRequired();
+
                     b.Navigation("EventParticipations");
 
                     b.Navigation("OrganisationMemberships");

@@ -56,6 +56,9 @@ public sealed class UserTests
         Assert.NotEqual(Guid.Empty, user.Id);
         Assert.True(user.CreatedAt <= DateTime.UtcNow);
         Assert.True(user.PasswordUpdatedAt <= DateTime.UtcNow);
+        Assert.NotNull(user.AuthInfo);
+        Assert.Equal(user.Id, user.AuthInfo.Id);
+        Assert.Equal(0, user.AuthInfo.AuthVersion);
     }
 
     [Fact]

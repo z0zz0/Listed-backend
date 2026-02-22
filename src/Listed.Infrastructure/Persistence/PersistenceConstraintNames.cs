@@ -38,6 +38,13 @@ public static class PersistenceConstraintNames
         public const string EmailUnique = "unique_index_users_email";
     }
 
+    public static class RefreshToken
+    {
+        public const string TokenHashUnique = "unique_index_refresh_tokens_token_hash";
+        public const string UserActiveLookup = "index_refresh_tokens_user_id_revoked_at";
+        public const string UserDeviceActiveUnique = "unique_index_refresh_tokens_user_id_device_id_active";
+    }
+
     public static class UserInfo
     {
         public const string NinUnique = "unique_index_users_nin";

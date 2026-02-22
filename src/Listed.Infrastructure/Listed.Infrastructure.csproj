@@ -11,9 +11,12 @@
 
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
+		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+		<PackageReference Include="StackExchange.Redis" />
 	</ItemGroup>
 	
 	<ItemGroup>

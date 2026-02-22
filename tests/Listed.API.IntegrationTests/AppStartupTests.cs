@@ -11,14 +11,12 @@ public sealed class AppStartupTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetRoot_ReturnsHelloWorld()
+    public async Task GetRoot_ReturnsNotFound()
     {
         using var client = _factory.CreateClient();
 
         var response = await client.GetAsync("/");
-        var body = await response.Content.ReadAsStringAsync();
 
-        Assert.True(response.IsSuccessStatusCode);
-        Assert.Equal("Hello World!", body);
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
     }
 }

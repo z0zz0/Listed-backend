@@ -22,6 +22,12 @@ public static class PersistenceConstraintCodes
         public const string EmailUnique = "users.email.unique";
     }
 
+    public static class RefreshToken
+    {
+        public const string TokenHashUnique = "refresh_tokens.token_hash.unique";
+        public const string UserDeviceActiveUnique = "refresh_tokens.user_device_active.unique";
+    }
+
     public static class UserInfo
     {
         public const string NinUnique = "users.nin.unique";
