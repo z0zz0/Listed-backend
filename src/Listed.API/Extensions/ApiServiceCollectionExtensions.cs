@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 
 namespace Listed.API.Extensions;
 
@@ -28,7 +29,13 @@ public static class ApiServiceCollectionExtensions
         services.AddListedAuthentication(authOptions);
         services.AddListedSignalR(valkeyConnectionMultiplexer);
         services.AddAuthorization();
-        services.AddControllers();
+        services
+            .AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+            });
 
         return services;
     }
