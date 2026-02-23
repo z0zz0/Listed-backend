@@ -88,7 +88,7 @@ public sealed class LoginCommandHandlerTests
             .Setup(x => x.Verify("StrongPass123!", "stored-hash"))
             .Returns(true);
         accessTokenService
-            .Setup(x => x.Create(user.Id, user.Email, user.AuthInfo.AuthVersion, It.IsAny<DateTime>()))
+            .Setup(x => x.Create(user.Id, It.IsAny<Guid>(), user.Email, user.AuthInfo.AuthVersion, It.IsAny<DateTime>()))
             .Returns(new AccessTokenResult("access-token", now.AddMinutes(15), 900));
         refreshTokenService
             .Setup(x => x.GenerateToken())
@@ -135,6 +135,7 @@ public sealed class LoginCommandHandlerTests
         var activeToken = new RefreshToken(
             user.Id,
             deviceId,
+            Guid.NewGuid(),
             existingRefreshTokenHash,
             DateTime.UtcNow.AddMinutes(-5),
             DateTime.UtcNow.AddDays(1),
@@ -155,7 +156,7 @@ public sealed class LoginCommandHandlerTests
             .Setup(x => x.Verify("StrongPass123!", "stored-hash"))
             .Returns(true);
         accessTokenService
-            .Setup(x => x.Create(user.Id, user.Email, user.AuthInfo.AuthVersion, It.IsAny<DateTime>()))
+            .Setup(x => x.Create(user.Id, It.IsAny<Guid>(), user.Email, user.AuthInfo.AuthVersion, It.IsAny<DateTime>()))
             .Returns(new AccessTokenResult("access-token", now.AddMinutes(15), 900));
         refreshTokenService
             .Setup(x => x.GenerateToken())

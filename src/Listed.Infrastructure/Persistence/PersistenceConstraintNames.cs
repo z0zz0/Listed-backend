@@ -43,6 +43,7 @@ public static class PersistenceConstraintNames
         public const string TokenHashUnique = "unique_index_refresh_tokens_token_hash";
         public const string UserActiveLookup = "index_refresh_tokens_user_id_revoked_at";
         public const string UserDeviceActiveUnique = "unique_index_refresh_tokens_user_id_device_id_active";
+        public const string SessionActiveUnique = "unique_index_refresh_tokens_session_id_active";
     }
 
     public static class UserInfo

@@ -68,6 +68,7 @@ public sealed class RefreshCommandHandlerTests
         var revokedRefreshToken = new RefreshToken(
             user.Id,
             Guid.NewGuid(),
+            Guid.NewGuid(),
             "hash",
             DateTime.UtcNow.AddDays(-1),
             DateTime.UtcNow.AddDays(1),

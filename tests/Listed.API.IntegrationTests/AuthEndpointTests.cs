@@ -109,6 +109,33 @@ public sealed class AuthEndpointTests : IClassFixture<ApiWebApplicationFactory>,
     }
 
     [Fact]
+    public async Task Logout_InvalidatesAllAccessTokensInSameSessionImmediately()
+    {
+        using var client = _factory.CreateClient();
+
+        var email = LoginRequestFactory.CreateEmail("auth-logout-session");
+        var password = "StrongPass123!";
+        await CreateUserAsync(client, email, password);
+
+        var login = await client.PostAsJsonAsync("/api/auth/login", LoginRequestFactory.Valid(email, password));
+        var loginBody = await login.Content.ReadFromJsonAsync<AccessTokenResponse>();
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        Assert.NotNull(loginBody);
+
+        var refresh = await client.PostAsync("/api/auth/refresh", content: null);
+        var refreshBody = await refresh.Content.ReadFromJsonAsync<AccessTokenResponse>();
+        Assert.Equal(HttpStatusCode.OK, refresh.StatusCode);
+        Assert.NotNull(refreshBody);
+        Assert.NotEqual(loginBody!.Token, refreshBody!.Token);
+
+        var logoutResponse = await SendAuthorizedAsync(client, HttpMethod.Post, "/api/auth/logout", loginBody.Token);
+        Assert.Equal(HttpStatusCode.NoContent, logoutResponse.StatusCode);
+
+        var meWithRefreshedToken = await SendAuthorizedAsync(client, HttpMethod.Get, "/api/auth/me", refreshBody.Token);
+        Assert.Equal(HttpStatusCode.Unauthorized, meWithRefreshedToken.StatusCode);
+    }
+
+    [Fact]
     public async Task LogoutAll_InvalidatesAllActiveSessionsImmediately()
     {
         using var client1 = _factory.CreateClient();

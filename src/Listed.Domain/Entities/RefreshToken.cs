@@ -5,6 +5,7 @@ public class RefreshToken
     public Guid Id { get; private set; }
     public Guid UserId { get; private set; }
     public Guid DeviceId { get; private set; }
+    public Guid SessionId { get; private set; }
     public string TokenHash { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; }
     public DateTime ExpiresAt { get; private set; }
@@ -20,6 +21,7 @@ public class RefreshToken
     public RefreshToken(
         Guid userId,
         Guid deviceId,
+        Guid sessionId,
         string tokenHash,
         DateTime createdAtUtc,
         DateTime expiresAtUtc,
@@ -41,6 +43,11 @@ public class RefreshToken
             throw new ArgumentException("Device id cannot be empty.", nameof(deviceId));
         }
 
+        if (sessionId == Guid.Empty)
+        {
+            throw new ArgumentException("Session id cannot be empty.", nameof(sessionId));
+        }
+
         if (expiresAtUtc <= createdAtUtc)
         {
             throw new ArgumentException("Expiration must be after creation.");
@@ -49,6 +56,7 @@ public class RefreshToken
         Id = Guid.NewGuid();
         UserId = userId;
         DeviceId = deviceId;
+        SessionId = sessionId;
         TokenHash = tokenHash;
         CreatedAt = createdAtUtc;
         ExpiresAt = expiresAtUtc;

@@ -39,7 +39,6 @@ public sealed class LoginCommandHandler(
             utcNow,
             cancellationToken);
 
-        var accessToken = accessTokenService.Create(user.Id, user.Email, user.AuthInfo.AuthVersion, utcNow);
         var refreshCreationResult = await IssueRefreshTokenSessionAsync(
             user,
             activeDeviceSession,
@@ -53,6 +52,12 @@ public sealed class LoginCommandHandler(
         }
 
         var created = refreshCreationResult.Value!;
+        var accessToken = accessTokenService.Create(
+            user.Id,
+            created.Entity.SessionId,
+            user.Email,
+            user.AuthInfo.AuthVersion,
+            utcNow);
 
         logger.LogInformation("Login succeeded. UserId={UserId}, Email={Email}", user.Id, user.Email);
 
@@ -77,6 +82,7 @@ public sealed class LoginCommandHandler(
             var refreshToken = new RefreshToken(
                 user.Id,
                 command.DeviceId,
+                activeDeviceSession?.SessionId ?? Guid.NewGuid(),
                 tokenHash,
                 utcNow,
                 utcNow.Add(authSettings.RefreshTokenLifetime),

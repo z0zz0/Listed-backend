@@ -56,8 +56,9 @@ Keep implementation style and architecture consistent so new features can be add
 - Refresh policy:
   - Requires valid refresh token plus matching `device_id` session binding.
 - Logout policy:
-  - `logout` invalidates current session (refresh token + current access token `jti`).
+  - `logout` invalidates current session (refresh token + session `sid` revocation + current access token `jti`).
   - `logout-all` invalidates all sessions and increments `auth_version`.
+  - Keep one active refresh token per `session_id` (`revoked_at IS NULL` partial unique index).
 
 ## Configuration And Environments
 
@@ -83,4 +84,3 @@ Keep implementation style and architecture consistent so new features can be add
 
 - Keep `README.md` updated when architecture, setup, or behavior changes.
 - Keep docs practical and implementation-accurate.
-

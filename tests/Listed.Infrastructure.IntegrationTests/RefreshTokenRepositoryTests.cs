@@ -152,6 +152,6 @@ public sealed class RefreshTokenRepositoryTests : IClassFixture<InfrastructureDa
     private static RefreshToken CreateRefreshToken(Guid userId, string tokenHash, Guid? deviceId = null)
     {
         var now = DateTime.UtcNow;
-        return new RefreshToken(userId, deviceId ?? Guid.NewGuid(), tokenHash, now, now.AddDays(30), "127.0.0.1", "integration-test");
+        return new RefreshToken(userId, deviceId ?? Guid.NewGuid(), Guid.NewGuid(), tokenHash, now, now.AddDays(30), "127.0.0.1", "integration-test");
     }
 }

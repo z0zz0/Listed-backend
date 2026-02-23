@@ -58,7 +58,7 @@ Projects:
   - JWT bearer authentication
   - BCrypt password hashing
   - Refresh-token rotation with hashed token storage
-  - Valkey-backed auth state (revoked access token JTIs, user auth version cache)
+  - Valkey-backed auth state (revoked access token JTIs, revoked session IDs, user auth version cache)
 - Distributed/runtime:
   - Valkey (StackExchange.Redis client)
   - Nginx reverse proxy + round-robin load balancing to two API containers
@@ -72,7 +72,7 @@ Projects:
 
 - Access token:
   - JWT, lifetime: 15 minutes (`Auth:AccessTokenLifetimeMinutes`).
-  - Includes claims like `sub`, `jti`, `auth_version`.
+  - Includes claims like `sub`, `sid`, `jti`, `auth_version`.
 - Refresh token:
   - Opaque token issued in HttpOnly cookie.
   - Only hash stored in DB.
@@ -80,8 +80,9 @@ Projects:
 - Device-scoped refresh sessions:
   - `device_id` is tracked and persisted.
   - Unique active session enforced per `(user_id, device_id)` while `revoked_at IS NULL`.
+  - Unique active refresh token enforced per `session_id` while `revoked_at IS NULL`.
 - Immediate invalidation:
-  - Logout current session revokes current refresh token and current access token (`jti`) in Valkey until token expiry.
+  - Logout current session revokes current refresh token and revokes session (`sid`) in Valkey until token expiry (plus current token `jti`).
   - Logout-all revokes all refresh tokens and increments `auth_version`; stale access tokens fail validation immediately.
 
 ## Local Get-Started Guide
@@ -175,7 +176,7 @@ When adding a new feature, follow this order:
   - Rotates refresh token and returns new access token.
 - Logout (current session):
   - `POST /api/auth/logout`
-  - Revokes current refresh token + immediately invalidates current access token.
+  - Revokes current refresh token + immediately invalidates all access tokens from the same session.
 - Logout all sessions:
   - `POST /api/auth/logout-all`
   - Revokes all refresh tokens for user + bumps `auth_version` for immediate global invalidation.

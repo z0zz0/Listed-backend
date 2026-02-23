@@ -31,13 +31,18 @@ public sealed class RefreshCommandHandler(
 
         var (user, currentToken) = contextResult.Value!;
 
-        var accessToken = accessTokenService.Create(user.Id, user.Email, user.AuthInfo.AuthVersion, utcNow);
+        var accessToken = accessTokenService.Create(
+            user.Id,
+            currentToken.SessionId,
+            user.Email,
+            user.AuthInfo.AuthVersion,
+            utcNow);
         (RefreshToken Entity, string PlainToken)? replacement = null;
         var rotated = false;
 
         for (var attempt = 1; attempt <= MaxRefreshTokenGenerationAttempts; attempt++)
         {
-            replacement = CreateReplacementRefreshToken(user, currentToken.DeviceId, utcNow, command);
+            replacement = CreateReplacementRefreshToken(user, currentToken.DeviceId, currentToken.SessionId, utcNow, command);
 
             try
             {
@@ -152,6 +157,7 @@ public sealed class RefreshCommandHandler(
     private (RefreshToken Entity, string PlainToken) CreateReplacementRefreshToken(
         User user,
         Guid deviceId,
+        Guid sessionId,
         DateTime utcNow,
         RefreshCommand command)
     {
@@ -161,6 +167,7 @@ public sealed class RefreshCommandHandler(
         var refreshToken = new RefreshToken(
             user.Id,
             deviceId,
+            sessionId,
             tokenHash,
             utcNow,
             utcNow.Add(authSettings.RefreshTokenLifetime),

@@ -17,7 +17,7 @@ public sealed class LogoutCommandHandler(
         var utcNow = DateTime.UtcNow;
         await TryRevokeCurrentRefreshTokenAsync(command, utcNow, cancellationToken);
 
-        await RevokeCurrentAccessTokenAsync(command, utcNow, cancellationToken);
+        await RevokeCurrentSessionAccessAsync(command, utcNow, cancellationToken);
 
         logger.LogInformation("Logout succeeded for UserId={UserId}", command.UserId);
 
@@ -45,12 +45,12 @@ public sealed class LogoutCommandHandler(
         await refreshTokenRepository.RevokeAsync(refreshToken.Id, utcNow, cancellationToken);
     }
 
-    private async Task RevokeCurrentAccessTokenAsync(
+    private async Task RevokeCurrentSessionAccessAsync(
         LogoutCommand command,
         DateTime utcNow,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(command.AccessTokenId) || command.AccessTokenExpiresAtUtc is null)
+        if (command.AccessTokenExpiresAtUtc is null)
         {
             return;
         }
@@ -61,6 +61,14 @@ public sealed class LogoutCommandHandler(
             return;
         }
 
-        await authStateStore.RevokeAccessTokenAsync(command.AccessTokenId, ttl, cancellationToken);
+        if (command.AccessTokenSessionId.HasValue)
+        {
+            await authStateStore.RevokeSessionAsync(command.AccessTokenSessionId.Value, ttl, cancellationToken);
+        }
+
+        if (!string.IsNullOrWhiteSpace(command.AccessTokenId))
+        {
+            await authStateStore.RevokeAccessTokenAsync(command.AccessTokenId, ttl, cancellationToken);
+        }
     }
 }

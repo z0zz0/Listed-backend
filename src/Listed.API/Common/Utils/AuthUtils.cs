@@ -10,6 +10,7 @@ namespace Listed.API.Common.Utils;
 public static class AuthUtils
 {
     private const string DeviceIdCookieName = "listed_device_id";
+    private const string SessionIdClaim = "sid";
 
     public static AccessTokenResponse MapToAccessTokenResponse(this AccessTokenResult accessTokenResult)
     {
@@ -44,6 +45,12 @@ public static class AuthUtils
         }
 
         return DateTimeOffset.FromUnixTimeSeconds(epochSeconds).UtcDateTime;
+    }
+
+    public static Guid? TryGetAccessTokenSessionId(this ClaimsPrincipal principal)
+    {
+        var sessionIdClaim = principal.FindFirst(SessionIdClaim)?.Value;
+        return Guid.TryParse(sessionIdClaim, out var sessionId) ? sessionId : null;
     }
 
     public static Guid GetOrCreateDeviceId(HttpRequest request, HttpResponse response)

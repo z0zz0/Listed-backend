@@ -10,15 +10,17 @@ namespace Listed.Infrastructure.Security;
 public sealed class AccessTokenService(IOptions<AuthOptions> authOptions) : IAccessTokenService
 {
     private const string AuthVersionClaim = "auth_version";
+    private const string SessionIdClaim = "sid";
     private readonly AuthOptions _authOptions = authOptions.Value;
 
-    public AccessTokenResult Create(Guid userId, string email, int authVersion, DateTime utcNow)
+    public AccessTokenResult Create(Guid userId, Guid sessionId, string email, int authVersion, DateTime utcNow)
     {
         var expiresAtUtc = utcNow.Add(_authOptions.AccessTokenLifetime);
 
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new Claim(SessionIdClaim, sessionId.ToString("D")),
             new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim(AuthVersionClaim, authVersion.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N"))

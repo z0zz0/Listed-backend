@@ -10,6 +10,7 @@ public sealed class ValkeyAuthStateStore(
 {
     private static readonly TimeSpan AuthVersionCacheTtl = TimeSpan.FromDays(90);
     private const string RevokedTokenKeyPrefix = "auth:revoked:jti:";
+    private const string RevokedSessionKeyPrefix = "auth:revoked:sid:";
     private const string UserAuthVersionKeyPrefix = "auth:user:version:";
     private readonly IDatabase _database = connectionMultiplexer.GetDatabase();
 
@@ -48,6 +49,45 @@ public sealed class ValkeyAuthStateStore(
         catch (Exception ex)
         {
             logger.LogError(ex, "Valkey failed while revoking access token. TokenId={TokenId}", tokenId);
+            throw;
+        }
+    }
+
+    public async Task<bool> IsSessionRevokedAsync(Guid sessionId, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var key = $"{RevokedSessionKeyPrefix}{sessionId:D}";
+
+        try
+        {
+            return await _database.KeyExistsAsync(key);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Valkey failed while checking revoked session. SessionId={SessionId}", sessionId);
+            throw;
+        }
+    }
+
+    public async Task RevokeSessionAsync(Guid sessionId, TimeSpan ttl, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (ttl <= TimeSpan.Zero)
+        {
+            return;
+        }
+
+        var key = $"{RevokedSessionKeyPrefix}{sessionId:D}";
+
+        try
+        {
+            await _database.StringSetAsync(key, "1", ttl);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Valkey failed while revoking session. SessionId={SessionId}", sessionId);
             throw;
         }
     }

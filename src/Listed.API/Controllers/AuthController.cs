@@ -103,6 +103,7 @@ public sealed class AuthController(
         var command = new LogoutCommand(
             userId.Value,
             refreshToken,
+            User.TryGetAccessTokenSessionId(),
             User.TryGetAccessTokenId(),
             User.TryGetAccessTokenExpiresAtUtc());
 

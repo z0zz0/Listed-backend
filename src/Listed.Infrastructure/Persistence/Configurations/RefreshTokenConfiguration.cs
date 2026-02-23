@@ -18,6 +18,9 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
         builder.Property(rt => rt.DeviceId)
             .IsRequired();
 
+        builder.Property(rt => rt.SessionId)
+            .IsRequired();
+
         builder.Property(rt => rt.CreatedAt)
             .IsRequired();
 
@@ -49,5 +52,10 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
             .IsUnique()
             .HasFilter("\"revoked_at\" IS NULL")
             .HasDatabaseName(PersistenceConstraintNames.RefreshToken.UserDeviceActiveUnique);
+
+        builder.HasIndex(rt => rt.SessionId)
+            .IsUnique()
+            .HasFilter("\"revoked_at\" IS NULL")
+            .HasDatabaseName(PersistenceConstraintNames.RefreshToken.SessionActiveUnique);
     }
 }

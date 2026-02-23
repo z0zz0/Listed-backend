@@ -12,6 +12,7 @@ public sealed class JwtTokenValidationService(
     ILogger<JwtTokenValidationService> logger)
 {
     private const string AuthVersionClaim = "auth_version";
+    private const string SessionIdClaim = "sid";
 
     public async Task ValidateAsync(TokenValidatedContext context)
     {
@@ -26,6 +27,7 @@ public sealed class JwtTokenValidationService(
 
             var tokenId = principal.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
             var subject = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            var sessionIdClaim = principal.FindFirst(SessionIdClaim)?.Value;
             var tokenAuthVersionClaim = principal.FindFirst(AuthVersionClaim)?.Value;
 
             if (string.IsNullOrWhiteSpace(tokenId)
@@ -42,6 +44,18 @@ public sealed class JwtTokenValidationService(
                 return;
             }
 
+            Guid? sessionId = null;
+            if (!string.IsNullOrWhiteSpace(sessionIdClaim))
+            {
+                if (!Guid.TryParse(sessionIdClaim, out var parsedSessionId))
+                {
+                    context.Fail("Invalid session id claim.");
+                    return;
+                }
+
+                sessionId = parsedSessionId;
+            }
+
             if (!int.TryParse(tokenAuthVersionClaim, out var tokenAuthVersion))
             {
                 context.Fail("Invalid auth version claim.");
@@ -54,6 +68,16 @@ public sealed class JwtTokenValidationService(
             {
                 context.Fail("Access token has been revoked.");
                 return;
+            }
+
+            if (sessionId.HasValue)
+            {
+                var isSessionRevoked = await authStateStore.IsSessionRevokedAsync(sessionId.Value, cancellationToken);
+                if (isSessionRevoked)
+                {
+                    context.Fail("Session has been revoked.");
+                    return;
+                }
             }
 
             var currentAuthVersion = await authStateStore.GetUserAuthVersionAsync(userId, cancellationToken);
