@@ -1,6 +1,8 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Listed.API.Contracts.Auth;
 using Listed.Infrastructure.Persistence;
 using Listed.Testing.Factories;
 using Microsoft.EntityFrameworkCore;
@@ -103,11 +105,19 @@ public sealed class CreateUserEndpointTests : IClassFixture<ApiWebApplicationFac
     {
         using var client = _factory.CreateClient();
         var payload = CreateUserRequestFactory.Valid(email: "  Mixed.Case@Test.IO  ");
+        var normalizedEmail = payload.Email.Trim().ToLowerInvariant();
 
         var createResponse = await client.PostAsJsonAsync("/api/users", payload);
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
 
-        var lookupResponse = await client.GetAsync("/api/users/by-email?email=mixed.case@test.io");
+        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", LoginRequestFactory.Valid(normalizedEmail, payload.Password));
+        var loginBody = await loginResponse.Content.ReadFromJsonAsync<AccessTokenResponse>();
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+        Assert.NotNull(loginBody);
+
+        var lookupRequest = new HttpRequestMessage(HttpMethod.Get, "/api/users/by-email?email=mixed.case@test.io");
+        lookupRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", loginBody!.Token);
+        var lookupResponse = await client.SendAsync(lookupRequest);
         var lookupBody = await lookupResponse.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, lookupResponse.StatusCode);

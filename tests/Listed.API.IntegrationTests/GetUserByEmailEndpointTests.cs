@@ -1,6 +1,8 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Listed.API.Contracts.Auth;
 using Listed.Testing.Factories;
 
 namespace Listed.API.IntegrationTests;
@@ -26,12 +28,13 @@ public sealed class GetUserByEmailEndpointTests : IClassFixture<ApiWebApplicatio
     public async Task GetUsersByEmail_WithExistingUser_ReturnsOkWithExpandedPayload()
     {
         using var client = _factory.CreateClient();
+        var authToken = await CreateAuthenticatedUserAndGetTokenAsync(client);
 
         var createPayload = CreateUserRequestFactory.Valid(email: "api.get@test.io");
         var createResponse = await client.PostAsJsonAsync("/api/users", createPayload);
         Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
 
-        var response = await client.GetAsync("/api/users/by-email?email=api.get@test.io");
+        var response = await SendAuthorizedAsync(client, HttpMethod.Get, "/api/users/by-email?email=api.get@test.io", authToken);
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -58,8 +61,9 @@ public sealed class GetUserByEmailEndpointTests : IClassFixture<ApiWebApplicatio
     public async Task GetUsersByEmail_WithInvalidEmail_ReturnsBadRequest()
     {
         using var client = _factory.CreateClient();
+        var authToken = await CreateAuthenticatedUserAndGetTokenAsync(client);
 
-        var response = await client.GetAsync("/api/users/by-email?email=invalid-email");
+        var response = await SendAuthorizedAsync(client, HttpMethod.Get, "/api/users/by-email?email=invalid-email", authToken);
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -72,8 +76,9 @@ public sealed class GetUserByEmailEndpointTests : IClassFixture<ApiWebApplicatio
     public async Task GetUsersByEmail_WithoutEmailQueryParam_ReturnsBadRequest()
     {
         using var client = _factory.CreateClient();
+        var authToken = await CreateAuthenticatedUserAndGetTokenAsync(client);
 
-        var response = await client.GetAsync("/api/users/by-email");
+        var response = await SendAuthorizedAsync(client, HttpMethod.Get, "/api/users/by-email", authToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
@@ -81,13 +86,42 @@ public sealed class GetUserByEmailEndpointTests : IClassFixture<ApiWebApplicatio
     public async Task GetUsersByEmail_WithUnknownEmail_ReturnsNotFound()
     {
         using var client = _factory.CreateClient();
+        var authToken = await CreateAuthenticatedUserAndGetTokenAsync(client);
 
-        var response = await client.GetAsync("/api/users/by-email?email=missing@test.io");
+        var response = await SendAuthorizedAsync(client, HttpMethod.Get, "/api/users/by-email?email=missing@test.io", authToken);
         var body = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
         using var document = JsonDocument.Parse(body);
         Assert.Equal("User.NotFound.ByEmail", document.RootElement.GetProperty("code").GetString());
+    }
+
+    private static async Task<string> CreateAuthenticatedUserAndGetTokenAsync(HttpClient client)
+    {
+        var email = CreateUserRequestFactory.CreateEmail("lookup-auth");
+        var password = "StrongPass123!";
+
+        var createResponse = await client.PostAsJsonAsync("/api/users", CreateUserRequestFactory.Valid(email, password));
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+
+        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", LoginRequestFactory.Valid(email, password));
+        var loginBody = await loginResponse.Content.ReadFromJsonAsync<AccessTokenResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+        Assert.NotNull(loginBody);
+
+        return loginBody!.Token;
+    }
+
+    private static Task<HttpResponseMessage> SendAuthorizedAsync(
+        HttpClient client,
+        HttpMethod method,
+        string url,
+        string accessToken)
+    {
+        var request = new HttpRequestMessage(method, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        return client.SendAsync(request);
     }
 }

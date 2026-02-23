@@ -6,6 +6,7 @@ using Listed.Application.Users.Results;
 using Listed.API.Common.Utils;
 using Listed.API.Common.ErrorMapping;
 using Listed.API.Contracts.Users;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -13,6 +14,7 @@ namespace Listed.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UsersController(
     ICommandHandler<CreateUserCommand, Result<CreateUserResult>> createUserCommandHandler,
     IQueryHandler<GetUserByEmailQuery, Result<GetUserResult>> getUserByEmailQueryHandler,
@@ -29,6 +31,7 @@ public class UsersController(
             error => resultHttpMapper.ToFailureActionResult(this, error));
     }
 
+    [AllowAnonymous]
     [HttpPost(Name = "CreateUser")]
     public async Task<IActionResult> CreateUser(
         [FromBody] CreateUserRequest request,

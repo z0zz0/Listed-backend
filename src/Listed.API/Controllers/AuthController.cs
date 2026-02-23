@@ -17,6 +17,7 @@ namespace Listed.API.Controllers;
 
 [ApiController]
 [Route("api/auth")]
+[Authorize]
 public sealed class AuthController(
     ICommandHandler<LoginCommand, Result<AuthTokensResult>> loginCommandHandler,
     ICommandHandler<RefreshCommand, Result<AuthTokensResult>> refreshCommandHandler,
@@ -26,6 +27,7 @@ public sealed class AuthController(
     ResultHttpMapper resultHttpMapper,
     AuthOptions authOptions) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
@@ -57,6 +59,7 @@ public sealed class AuthController(
             error => resultHttpMapper.ToFailureActionResult(this, error));
     }
 
+    [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh(CancellationToken cancellationToken)
     {
@@ -86,7 +89,6 @@ public sealed class AuthController(
             error => resultHttpMapper.ToFailureActionResult(this, error));
     }
 
-    [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
@@ -115,7 +117,6 @@ public sealed class AuthController(
             error => resultHttpMapper.ToFailureActionResult(this, error));
     }
 
-    [Authorize]
     [HttpPost("logout-all")]
     public async Task<IActionResult> LogoutAll(CancellationToken cancellationToken)
     {
@@ -141,7 +142,6 @@ public sealed class AuthController(
             error => resultHttpMapper.ToFailureActionResult(this, error));
     }
 
-    [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
     {
