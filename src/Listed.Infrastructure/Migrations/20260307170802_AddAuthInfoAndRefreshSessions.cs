@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Listed.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddAuthInfoAndRefreshTokens : Migration
+    public partial class AddAuthInfoAndRefreshSessions : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -38,6 +38,8 @@ namespace Listed.Infrastructure.Migrations
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    device_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    session_id = table.Column<Guid>(type: "uuid", nullable: false),
                     token_hash = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     expires_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -65,11 +67,27 @@ namespace Listed.Infrastructure.Migrations
                 columns: new[] { "user_id", "revoked_at" });
 
             migrationBuilder.CreateIndex(
+                name: "unique_index_refresh_tokens_session_id_active",
+                schema: "listed",
+                table: "refresh_tokens",
+                column: "session_id",
+                unique: true,
+                filter: "\"revoked_at\" IS NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "unique_index_refresh_tokens_token_hash",
                 schema: "listed",
                 table: "refresh_tokens",
                 column: "token_hash",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "unique_index_refresh_tokens_user_id_device_id_active",
+                schema: "listed",
+                table: "refresh_tokens",
+                columns: new[] { "user_id", "device_id" },
+                unique: true,
+                filter: "\"revoked_at\" IS NULL");
         }
 
         /// <inheritdoc />

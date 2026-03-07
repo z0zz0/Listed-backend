@@ -362,14 +362,14 @@ namespace Listed.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_refresh_tokens");
 
-                    b.HasIndex("TokenHash")
-                        .IsUnique()
-                        .HasDatabaseName("unique_index_refresh_tokens_token_hash");
-
                     b.HasIndex("SessionId")
                         .IsUnique()
                         .HasDatabaseName("unique_index_refresh_tokens_session_id_active")
                         .HasFilter("\"revoked_at\" IS NULL");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("unique_index_refresh_tokens_token_hash");
 
                     b.HasIndex("UserId", "DeviceId")
                         .IsUnique()

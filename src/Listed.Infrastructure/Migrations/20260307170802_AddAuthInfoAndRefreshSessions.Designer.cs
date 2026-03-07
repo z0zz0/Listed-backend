@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Listed.Infrastructure.Migrations
 {
     [DbContext(typeof(ListedDbContext))]
-    [Migration("20260221223831_AddDeviceScopedRefreshSessions")]
-    partial class AddDeviceScopedRefreshSessions
+    [Migration("20260307170802_AddAuthInfoAndRefreshSessions")]
+    partial class AddAuthInfoAndRefreshSessions
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -348,6 +348,10 @@ namespace Listed.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("revoked_at");
 
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("session_id");
+
                     b.Property<string>("TokenHash")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -360,6 +364,11 @@ namespace Listed.Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_refresh_tokens");
+
+                    b.HasIndex("SessionId")
+                        .IsUnique()
+                        .HasDatabaseName("unique_index_refresh_tokens_session_id_active")
+                        .HasFilter("\"revoked_at\" IS NULL");
 
                     b.HasIndex("TokenHash")
                         .IsUnique()
