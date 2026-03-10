@@ -9,7 +9,7 @@ public sealed class AuthErrorHttpMapper : IErrorHttpMapper
 {
     public bool CanHandle(string errorCode)
     {
-        return errorCode == AuthError.UserNotFoundCode
+        return errorCode == AuthError.SessionNotFoundCode
                || errorCode == AuthError.TokenGenerationFailedCode
                || AuthError.IsValidationCode(errorCode)
                || AuthError.IsUnauthorizedCode(errorCode);
@@ -27,7 +27,7 @@ public sealed class AuthErrorHttpMapper : IErrorHttpMapper
             return controller.Unauthorized(new { error.Code, error.Message });
         }
 
-        if (error.Code == AuthError.UserNotFoundCode)
+        if (error.Code == AuthError.SessionNotFoundCode)
         {
             return controller.NotFound(new { error.Code, error.Message });
         }

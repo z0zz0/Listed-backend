@@ -11,7 +11,8 @@ public sealed class UserErrorHttpMapper : IErrorHttpMapper
     {
         return errorCode == UserError.EmailAlreadyInUseCode
                || UserError.IsValidationCode(errorCode)
-               || UserError.IsNotFoundCode(errorCode);
+               || UserError.IsRateLimitCode(errorCode)
+               || UserError.IsInternalCode(errorCode);
     }
 
     public IActionResult Map(ControllerBase controller, Error error)
@@ -26,9 +27,14 @@ public sealed class UserErrorHttpMapper : IErrorHttpMapper
             return controller.BadRequest(new { error.Code, error.Message });
         }
 
-        if (UserError.IsNotFoundCode(error.Code))
+        if (UserError.IsRateLimitCode(error.Code))
         {
-            return controller.NotFound(new { error.Code, error.Message });
+            return controller.StatusCode(StatusCodes.Status429TooManyRequests, new { error.Code, error.Message });
+        }
+
+        if (UserError.IsInternalCode(error.Code))
+        {
+            return controller.StatusCode(StatusCodes.Status500InternalServerError, new { error.Code, error.Message });
         }
 
         return controller.BadRequest(new { error.Code, error.Message });

@@ -11,7 +11,7 @@ public static class AuthError
     public const string InvalidRefreshTokenCode = "Auth.Unauthorized.InvalidRefreshToken";
     public const string ExpiredRefreshTokenCode = "Auth.Unauthorized.ExpiredRefreshToken";
     public const string ReusedRefreshTokenCode = "Auth.Unauthorized.ReusedRefreshToken";
-    public const string UserNotFoundCode = "Auth.NotFound.User";
+    public const string SessionNotFoundCode = "Auth.NotFound.Session";
     public const string TokenGenerationFailedCode = "Auth.Internal.TokenGenerationFailed";
 
     public static Error InvalidEmail() =>
@@ -35,8 +35,8 @@ public static class AuthError
     public static Error ReusedRefreshToken() =>
         new(ReusedRefreshTokenCode, "Refresh token was already used.");
 
-    public static Error UserNotFound(Guid userId) =>
-        new(UserNotFoundCode, $"User with id '{userId}' was not found.");
+    public static Error SessionNotFound(Guid userId) =>
+        new(SessionNotFoundCode, $"AuthSession for Userid '{userId}' was not found.");
 
     public static Error TokenGenerationFailed() =>
         new(TokenGenerationFailedCode, "Could not generate a unique refresh token.");

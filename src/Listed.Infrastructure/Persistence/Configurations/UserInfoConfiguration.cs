@@ -12,11 +12,11 @@ public class UserInfoConfiguration : IEntityTypeConfiguration<UserInfo>
         builder.HasKey(ui => ui.Id);
         
         builder.Property(ui => ui.Nationality)
-            .IsRequired()
+            .IsRequired(false)
             .HasMaxLength(2);
 
         builder.Property(ui => ui.NationalIdentificationNumber)
-            .IsRequired()
+            .IsRequired(false)
             .HasMaxLength(25);
 
         builder.Property(ui => ui.FirstName)
@@ -27,12 +27,15 @@ public class UserInfoConfiguration : IEntityTypeConfiguration<UserInfo>
             .IsRequired()
             .HasMaxLength(50);
 
+        builder.Property(ui => ui.DateOfBirth)
+            .IsRequired();
+
         builder.Property(ui => ui.PhoneNumber)
-            .IsRequired()
+            .IsRequired(false)
             .HasMaxLength(20);
 
         builder.Property(ui => ui.HasPhonePrefix)
-            .IsRequired();
+            .IsRequired(false);
 
 
         builder.Property(ui => ui.Biography)

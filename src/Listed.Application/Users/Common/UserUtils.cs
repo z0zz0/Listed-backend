@@ -1,12 +1,12 @@
 using Listed.Application.Common;
 using Listed.Application.Users.Errors;
-using Listed.Application.Users.Results;
-using Listed.Domain.Entities;
 
 namespace Listed.Application.Users.Common;
 
 public static class UserUtils
 {
+    public const int MinPasswordLength = 8;
+
     public static Result<string> NormalizeAndValidateEmail(string? email)
     {
         if (string.IsNullOrWhiteSpace(email))
@@ -23,32 +23,82 @@ public static class UserUtils
         return Result<string>.Success(normalizedEmail);
     }
 
-    public static GetUserResult MapToGetUserResult(this User user)
+    public static Result<string> NormalizeAndValidateFirstName(string? firstName)
     {
-        var userInfo = user.UserInfo?.MapToGetUserInfoResult();
-
-        var photos = user.Photos
-            .OrderBy(photo => photo.SortOrder)
-            .Select(photo => new GetUserPhotoResult(photo.Id, photo.Url, photo.SortOrder, photo.UploadedAt))
-            .ToArray();
-
-        return new GetUserResult(
-            user.Id,
-            user.Email,
-            user.IsVerified,
-            user.IsSoftDeleted,
-            userInfo,
-            photos);
+        return NormalizeAndValidateName(firstName, UserError.InvalidFirstName);
     }
 
-    public static GetUserInfoResult MapToGetUserInfoResult(this UserInfo userInfo)
+    public static Result<string> NormalizeAndValidateLastName(string? lastName)
     {
-        return new GetUserInfoResult(
-            userInfo.Nationality,
-            userInfo.FirstName,
-            userInfo.LastName,
-            userInfo.PhoneNumber,
-            userInfo.HasPhonePrefix,
-            userInfo.Biography);
+        return NormalizeAndValidateName(lastName, UserError.InvalidLastName);
+    }
+
+    public static Result<DateOnly> ValidateDateOfBirth(DateOnly dateOfBirth)
+    {
+        var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (dateOfBirth >= todayUtc)
+        {
+            return Result<DateOnly>.Failure(UserError.InvalidDateOfBirth());
+        }
+
+        return Result<DateOnly>.Success(dateOfBirth);
+    }
+
+    public static Result<string> ValidatePassword(string? password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            return Result<string>.Failure(UserError.InvalidPassword());
+        }
+
+        if (password.Length < MinPasswordLength)
+        {
+            return Result<string>.Failure(UserError.InvalidPasswordTooShort(MinPasswordLength));
+        }
+
+        return Result<string>.Success(password);
+    }
+
+    private static Result<string> NormalizeAndValidateName(string? name, Func<Error> errorFactory)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Result<string>.Failure(errorFactory());
+        }
+
+        var normalizedName = name.Trim();
+
+        if (normalizedName.Contains(' ')
+            || normalizedName.StartsWith('-')
+            || normalizedName.EndsWith('-')
+            || normalizedName.Contains("--"))
+        {
+            return Result<string>.Failure(errorFactory());
+        }
+
+        if (!normalizedName.All(c => char.IsLetter(c) || c == '-'))
+        {
+            return Result<string>.Failure(errorFactory());
+        }
+
+        var normalizedChars = normalizedName.ToLowerInvariant().ToCharArray();
+        var shouldUppercase = true;
+
+        for (var i = 0; i < normalizedChars.Length; i++)
+        {
+            if (normalizedChars[i] == '-')
+            {
+                shouldUppercase = true;
+                continue;
+            }
+
+            if (shouldUppercase)
+            {
+                normalizedChars[i] = char.ToUpperInvariant(normalizedChars[i]);
+                shouldUppercase = false;
+            }
+        }
+
+        return Result<string>.Success(new string(normalizedChars));
     }
 }

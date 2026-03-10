@@ -1,3 +1,5 @@
+using Listed.Application.Contracts.Signup;
+using Listed.Infrastructure.Signup;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
@@ -17,6 +19,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton<IConnectionMultiplexer>(valkeyConnectionMultiplexer);
         services.AddPersistence(listedDatabaseConnectionString);
         services.AddSecurity(configuration);
+        services.AddEmail(configuration);
+        services.AddScoped<ISignupVerificationStore, ValkeySignupVerificationStore>();
 
         return services;
     }

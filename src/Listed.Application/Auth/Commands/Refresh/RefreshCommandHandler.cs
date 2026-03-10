@@ -130,7 +130,7 @@ public sealed class RefreshCommandHandler(
         var user = await userAuthRepository.GetByIdForAuthAsync(currentToken.UserId, cancellationToken);
         if (user is null || user.AuthInfo is null)
         {
-            return Result<(User User, RefreshToken CurrentToken)>.Failure(AuthError.UserNotFound(currentToken.UserId));
+            return Result<(User User, RefreshToken CurrentToken)>.Failure(AuthError.SessionNotFound(currentToken.UserId));
         }
 
         return Result<(User User, RefreshToken CurrentToken)>.Success((user, currentToken));

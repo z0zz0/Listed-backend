@@ -53,8 +53,6 @@ Factories live in `tests/Listed.Testing/Factories` and provide valid defaults pl
 Examples:
 - `UserFactory.Valid(...)`
 - `UserInfoFactory.Valid(...)`
-- `CreateUserCommandFactory.Valid(...)`
-- `CreateUserRequestFactory.Valid(...)`
 
 When to use factories:
 - use for baseline valid objects and repeated setup

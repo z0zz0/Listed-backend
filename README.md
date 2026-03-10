@@ -107,6 +107,8 @@ Services exposed locally:
 - pgAdmin: `http://localhost:5050`
 - Seq: `http://localhost:5341`
 - Valkey: `localhost:6379`
+- Mailpit UI: `http://localhost:8025`
+- Mailpit SMTP: `localhost:1025`
 
 Notes:
 
@@ -125,6 +127,7 @@ docker compose exec listed.api.1 dotnet ef database update --project /app/Listed
 
 - Call endpoints via Nginx (`http://localhost:5000/...`), not directly to internal API container ports.
 - Example auth endpoint: `POST http://localhost:5000/api/auth/login`
+- View local outgoing emails in Mailpit: `http://localhost:8025`
 
 ### 5. Run tests
 
@@ -141,7 +144,7 @@ Detailed testing guidance lives in `tests/README.md`.
 - `src/Listed.API/appsettings.json`
   - Base configuration with deployment placeholders for non-local environments.
 - `src/Listed.API/appsettings.Docker.json`
-  - Local developer overrides (DB, Valkey, local signing key, local data-protection settings).
+  - Local developer overrides (DB, Valkey, local signing key, local data-protection settings, local SMTP via Mailpit).
 
 Important:
 
@@ -162,11 +165,15 @@ When adding a new feature, follow this order:
 
 ## Current Features (WIP)
 
-- Create user:
-  - `POST /api/users`
-  - Creates a user with hashed password and initial auth metadata.
-- Get user by email:
-  - `GET /api/users/by-email?email=...`
+- Multi-step signup (REST):
+  - `POST /api/users/signup/start`
+    - Validates email uniqueness, generates verification code, sends email, and returns `signupId`.
+  - `POST /api/users/signup/verify-code`
+    - Verifies the code using `signupId` and opens the signup completion window.
+  - `POST /api/users/signup/personal-info`
+    - Saves first name, last name, and date of birth for the verified signup state by `signupId`.
+  - `POST /api/users/signup/complete`
+    - Creates the user account when verified signup state is complete for `signupId`, then auto-logins and returns access token.
 - Login:
   - `POST /api/auth/login`
   - Validates credentials, issues access token, and creates/rotates the device refresh session.
@@ -181,7 +188,7 @@ When adding a new feature, follow this order:
   - `POST /api/auth/logout-all`
   - Revokes all refresh tokens for user + bumps `auth_version` for immediate global invalidation.
 - Current authenticated user:
-  - `GET /api/auth/me`
+  - `GET /api/auth/session`
 - Local reverse proxy + load balancing:
   - Nginx routes to `listed.api.1` and `listed.api.2`.
 
@@ -238,7 +245,7 @@ Cause:
 Fix:
 
 - Call an actual endpoint, for example:
-  - `POST http://localhost:5000/api/users`
+  - `POST http://localhost:5000/api/users/signup/start`
   - `POST http://localhost:5000/api/auth/login`
 
 ### 5) Login works but authorized auth endpoints return `401`
@@ -274,6 +281,8 @@ Current host ports:
 - pgAdmin: `5050`
 - Seq: `5341`
 - Valkey: `6379`
+- Mailpit UI: `8025`
+- Mailpit SMTP: `1025`
 
 Notes:
 

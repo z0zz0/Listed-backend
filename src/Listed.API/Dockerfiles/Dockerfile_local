@@ -21,6 +21,13 @@ RUN dotnet restore "src/Listed.API/Listed.API.csproj"
 RUN dotnet tool install --global dotnet-ef --version 10.0.0
 ENV PATH="$PATH:/root/.dotnet/tools"
 
+# Install VS debugger for attach from VS Code
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl unzip \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /vsdbg \
+    && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg
+
 COPY . .
 
 WORKDIR /app/Listed.API

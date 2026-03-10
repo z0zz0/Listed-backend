@@ -16,6 +16,7 @@ public sealed class LoginCommandHandler(
     IAccessTokenService accessTokenService,
     IRefreshTokenService refreshTokenService,
     IAuthSettings authSettings,
+    IAuthStateStore authStateStore,
     ILogger<LoginCommandHandler> logger) : ICommandHandler<LoginCommand, Result<AuthTokensResult>>
 {
     private const int MaxRefreshTokenGenerationAttempts = 3;
@@ -38,6 +39,7 @@ public sealed class LoginCommandHandler(
             command.DeviceId,
             utcNow,
             cancellationToken);
+        activeDeviceSession = await EnsureActiveDeviceSessionIsUsableAsync(activeDeviceSession, utcNow, cancellationToken);
 
         var refreshCreationResult = await IssueRefreshTokenSessionAsync(
             user,
@@ -160,6 +162,33 @@ public sealed class LoginCommandHandler(
 
         logger.LogError("Refresh token issuance failed after maximum retries for UserId={UserId}", user.Id);
         return Result<(RefreshToken Entity, string PlainToken)>.Failure(AuthError.TokenGenerationFailed());
+    }
+
+    private async Task<RefreshToken?> EnsureActiveDeviceSessionIsUsableAsync(
+        RefreshToken? activeDeviceSession,
+        DateTime utcNow,
+        CancellationToken cancellationToken)
+    {
+        if (activeDeviceSession is null)
+        {
+            return null;
+        }
+
+        var isSessionRevoked = await authStateStore.IsSessionRevokedAsync(activeDeviceSession.SessionId, cancellationToken);
+        if (!isSessionRevoked)
+        {
+            return activeDeviceSession;
+        }
+
+        await refreshTokenRepository.RevokeAsync(activeDeviceSession.Id, utcNow, cancellationToken);
+
+        logger.LogInformation(
+            "Login ignored active refresh token because session is revoked. UserId={UserId}, DeviceId={DeviceId}, SessionId={SessionId}",
+            activeDeviceSession.UserId,
+            activeDeviceSession.DeviceId,
+            activeDeviceSession.SessionId);
+
+        return null;
     }
 
     private async Task<Result<User>> ValidateAndAuthenticateAsync(

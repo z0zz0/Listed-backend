@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Listed.API.Contracts.Auth;
-using Listed.API.Contracts.Users;
 using Listed.Testing.Factories;
 
 namespace Listed.API.IntegrationTests;
@@ -20,6 +19,7 @@ public sealed class AuthEndpointTests : IClassFixture<ApiWebApplicationFactory>,
     public async Task InitializeAsync()
     {
         await _factory.ResetDatabaseAsync();
+        _factory.ResetEmailInbox();
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -41,7 +41,6 @@ public sealed class AuthEndpointTests : IClassFixture<ApiWebApplicationFactory>,
         Assert.False(string.IsNullOrWhiteSpace(body!.Token));
         Assert.True(response.Headers.TryGetValues("Set-Cookie", out var setCookieValues));
         Assert.Contains(setCookieValues!, header => header.Contains("listed_refresh_token=", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(setCookieValues!, header => header.Contains("listed_device_id=", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -101,11 +100,11 @@ public sealed class AuthEndpointTests : IClassFixture<ApiWebApplicationFactory>,
         var logoutResponse = await SendAuthorizedAsync(client1, HttpMethod.Post, "/api/auth/logout", token1);
         Assert.Equal(HttpStatusCode.NoContent, logoutResponse.StatusCode);
 
-        var meWithToken1 = await SendAuthorizedAsync(client1, HttpMethod.Get, "/api/auth/me", token1);
-        var meWithToken2 = await SendAuthorizedAsync(client2, HttpMethod.Get, "/api/auth/me", token2);
+        var sessionWithToken1 = await SendAuthorizedAsync(client1, HttpMethod.Get, "/api/auth/session", token1);
+        var sessionWithToken2 = await SendAuthorizedAsync(client2, HttpMethod.Get, "/api/auth/session", token2);
 
-        Assert.Equal(HttpStatusCode.Unauthorized, meWithToken1.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, meWithToken2.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, sessionWithToken1.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, sessionWithToken2.StatusCode);
     }
 
     [Fact]
@@ -131,8 +130,8 @@ public sealed class AuthEndpointTests : IClassFixture<ApiWebApplicationFactory>,
         var logoutResponse = await SendAuthorizedAsync(client, HttpMethod.Post, "/api/auth/logout", loginBody.Token);
         Assert.Equal(HttpStatusCode.NoContent, logoutResponse.StatusCode);
 
-        var meWithRefreshedToken = await SendAuthorizedAsync(client, HttpMethod.Get, "/api/auth/me", refreshBody.Token);
-        Assert.Equal(HttpStatusCode.Unauthorized, meWithRefreshedToken.StatusCode);
+        var sessionWithRefreshedToken = await SendAuthorizedAsync(client, HttpMethod.Get, "/api/auth/session", refreshBody.Token);
+        Assert.Equal(HttpStatusCode.Unauthorized, sessionWithRefreshedToken.StatusCode);
     }
 
     [Fact]
@@ -151,19 +150,102 @@ public sealed class AuthEndpointTests : IClassFixture<ApiWebApplicationFactory>,
         var logoutAllResponse = await SendAuthorizedAsync(client1, HttpMethod.Post, "/api/auth/logout-all", token1);
         Assert.Equal(HttpStatusCode.NoContent, logoutAllResponse.StatusCode);
 
-        var meWithToken1 = await SendAuthorizedAsync(client1, HttpMethod.Get, "/api/auth/me", token1);
-        var meWithToken2 = await SendAuthorizedAsync(client2, HttpMethod.Get, "/api/auth/me", token2);
+        var sessionWithToken1 = await SendAuthorizedAsync(client1, HttpMethod.Get, "/api/auth/session", token1);
+        var sessionWithToken2 = await SendAuthorizedAsync(client2, HttpMethod.Get, "/api/auth/session", token2);
 
-        Assert.Equal(HttpStatusCode.Unauthorized, meWithToken1.StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, meWithToken2.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, sessionWithToken1.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, sessionWithToken2.StatusCode);
     }
 
-    private static async Task CreateUserAsync(HttpClient client, string email, string password)
+    [Fact]
+    public async Task LogoutAll_WithStolenTokenFromAnotherDevice_ReturnsUnauthorized_AndKeepsSessionsValid()
     {
-        var request = new CreateUserRequest(email, password);
-        var response = await client.PostAsJsonAsync("/api/users", request);
+        using var browserClient = _factory.CreateClient();
+        using var brunoClient = _factory.CreateClient();
 
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var email = LoginRequestFactory.CreateEmail("auth-logout-all-stolen-cross-device");
+        var password = "StrongPass123!";
+        await CreateUserAsync(browserClient, email, password);
+
+        var browserToken = await LoginAndGetAccessTokenAsync(browserClient, email, password);
+        var brunoToken = await LoginAndGetAccessTokenAsync(brunoClient, email, password);
+
+        var logoutAllWithStolenToken = await SendAuthorizedAsync(brunoClient, HttpMethod.Post, "/api/auth/logout-all", browserToken);
+        Assert.Equal(HttpStatusCode.Unauthorized, logoutAllWithStolenToken.StatusCode);
+
+        var browserSessionAfterAttempt = await SendAuthorizedAsync(browserClient, HttpMethod.Get, "/api/auth/session", browserToken);
+        var brunoSessionAfterAttempt = await SendAuthorizedAsync(brunoClient, HttpMethod.Get, "/api/auth/session", brunoToken);
+
+        Assert.Equal(HttpStatusCode.OK, browserSessionAfterAttempt.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, brunoSessionAfterAttempt.StatusCode);
+    }
+
+    [Fact]
+    public async Task Logout_WithoutRefreshCookie_ReturnsUnauthorized_AndDoesNotInvalidateExistingSession()
+    {
+        using var browserClient = _factory.CreateClient();
+        using var brunoClient = _factory.CreateClient();
+
+        var email = LoginRequestFactory.CreateEmail("auth-logout-cross-client");
+        var password = "StrongPass123!";
+        await CreateUserAsync(browserClient, email, password);
+
+        var firstLoginResponse = await browserClient.PostAsJsonAsync("/api/auth/login", LoginRequestFactory.Valid(email, password));
+        var firstLoginBody = await firstLoginResponse.Content.ReadFromJsonAsync<AccessTokenResponse>();
+        Assert.Equal(HttpStatusCode.OK, firstLoginResponse.StatusCode);
+        Assert.NotNull(firstLoginBody);
+
+        var logoutResponse = await SendAuthorizedAsync(brunoClient, HttpMethod.Post, "/api/auth/logout", firstLoginBody!.Token);
+        Assert.Equal(HttpStatusCode.Unauthorized, logoutResponse.StatusCode);
+
+        var browserSessionWithOriginalToken = await SendAuthorizedAsync(browserClient, HttpMethod.Get, "/api/auth/session", firstLoginBody.Token);
+        Assert.Equal(HttpStatusCode.OK, browserSessionWithOriginalToken.StatusCode);
+
+        var secondLoginResponse = await browserClient.PostAsJsonAsync("/api/auth/login", LoginRequestFactory.Valid(email, password));
+        var secondLoginBody = await secondLoginResponse.Content.ReadFromJsonAsync<AccessTokenResponse>();
+        Assert.Equal(HttpStatusCode.OK, secondLoginResponse.StatusCode);
+        Assert.NotNull(secondLoginBody);
+
+        var sessionResponse = await SendAuthorizedAsync(browserClient, HttpMethod.Get, "/api/auth/session", secondLoginBody!.Token);
+        Assert.Equal(HttpStatusCode.OK, sessionResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Logout_WithStolenTokenFromAnotherDevice_DoesNotRevokeOtherDeviceRefreshSession()
+    {
+        using var browserClient = _factory.CreateClient();
+        using var brunoClient = _factory.CreateClient();
+
+        var email = LoginRequestFactory.CreateEmail("auth-logout-stolen-cross-device");
+        var password = "StrongPass123!";
+        await CreateUserAsync(browserClient, email, password);
+
+        var browserLogin = await browserClient.PostAsJsonAsync("/api/auth/login", LoginRequestFactory.Valid(email, password));
+        var browserLoginBody = await browserLogin.Content.ReadFromJsonAsync<AccessTokenResponse>();
+        Assert.Equal(HttpStatusCode.OK, browserLogin.StatusCode);
+        Assert.NotNull(browserLoginBody);
+
+        var brunoLogin = await brunoClient.PostAsJsonAsync("/api/auth/login", LoginRequestFactory.Valid(email, password));
+        var brunoLoginBody = await brunoLogin.Content.ReadFromJsonAsync<AccessTokenResponse>();
+        Assert.Equal(HttpStatusCode.OK, brunoLogin.StatusCode);
+        Assert.NotNull(brunoLoginBody);
+
+        var logoutWithStolenToken = await SendAuthorizedAsync(brunoClient, HttpMethod.Post, "/api/auth/logout", browserLoginBody!.Token);
+        Assert.Equal(HttpStatusCode.Unauthorized, logoutWithStolenToken.StatusCode);
+
+        var browserSessionAfterLogout = await SendAuthorizedAsync(browserClient, HttpMethod.Get, "/api/auth/session", browserLoginBody.Token);
+        Assert.Equal(HttpStatusCode.OK, browserSessionAfterLogout.StatusCode);
+
+        var brunoSessionAfterLogout = await SendAuthorizedAsync(brunoClient, HttpMethod.Get, "/api/auth/session", brunoLoginBody!.Token);
+        Assert.Equal(HttpStatusCode.OK, brunoSessionAfterLogout.StatusCode);
+
+        var brunoRefreshAfterCrossDeviceLogout = await brunoClient.PostAsync("/api/auth/refresh", content: null);
+        Assert.Equal(HttpStatusCode.OK, brunoRefreshAfterCrossDeviceLogout.StatusCode);
+    }
+
+    private async Task CreateUserAsync(HttpClient client, string email, string password)
+    {
+        await SignupFlowTestHelper.CreateUserThroughSignupAsync(_factory, client, email, password);
     }
 
     private static async Task<string> LoginAndGetAccessTokenAsync(HttpClient client, string email, string password)

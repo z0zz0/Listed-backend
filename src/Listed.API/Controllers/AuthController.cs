@@ -5,7 +5,7 @@ using Listed.Application.Auth.Commands.Login;
 using Listed.Application.Auth.Commands.Logout;
 using Listed.Application.Auth.Commands.LogoutAll;
 using Listed.Application.Auth.Commands.Refresh;
-using Listed.Application.Auth.Queries.GetMe;
+using Listed.Application.Auth.Queries.GetAuthSession;
 using Listed.Application.Auth.Results;
 using Listed.Application.Common;
 using Listed.Application.Contracts.CQRS;
@@ -21,9 +21,9 @@ namespace Listed.API.Controllers;
 public sealed class AuthController(
     ICommandHandler<LoginCommand, Result<AuthTokensResult>> loginCommandHandler,
     ICommandHandler<RefreshCommand, Result<AuthTokensResult>> refreshCommandHandler,
-    ICommandHandler<LogoutCommand, Result> logoutCommandHandler,
+    ICommandHandler<LogoutCommand, Result<LogoutResult>> logoutCommandHandler,
     ICommandHandler<LogoutAllCommand, Result> logoutAllCommandHandler,
-    IQueryHandler<GetMeQuery, Result<GetMeResult>> getMeQueryHandler,
+    IQueryHandler<GetAuthSessionQuery, Result<GetAuthSessionResult>> getAuthSessionQueryHandler,
     ResultHttpMapper resultHttpMapper,
     AuthOptions authOptions) : ControllerBase
 {
@@ -47,12 +47,10 @@ public sealed class AuthController(
         return result.Match(
             tokens =>
             {
-                AuthUtils.WriteRefreshTokenCookie(
-                    Request,
-                    Response,
+                Response.Cookies.Append(
                     authOptions.RefreshTokenCookieName,
                     tokens.RefreshToken,
-                    tokens.RefreshTokenExpiresAtUtc);
+                    AuthUtils.BuildRefreshTokenCookieOptions(Request, tokens.RefreshTokenExpiresAtUtc));
 
                 return Ok(tokens.AccessToken.MapToAccessTokenResponse());
             },
@@ -77,12 +75,10 @@ public sealed class AuthController(
         return result.Match(
             tokens =>
             {
-                AuthUtils.WriteRefreshTokenCookie(
-                    Request,
-                    Response,
+                Response.Cookies.Append(
                     authOptions.RefreshTokenCookieName,
                     tokens.RefreshToken,
-                    tokens.RefreshTokenExpiresAtUtc);
+                    AuthUtils.BuildRefreshTokenCookieOptions(Request, tokens.RefreshTokenExpiresAtUtc));
 
                 return Ok(tokens.AccessToken.MapToAccessTokenResponse());
             },
@@ -110,9 +106,12 @@ public sealed class AuthController(
         var result = await logoutCommandHandler.Handle(command, cancellationToken);
 
         return result.Match(
-            () =>
+            _ =>
             {
-                AuthUtils.DeleteRefreshTokenCookie(Request, Response, authOptions.RefreshTokenCookieName);
+                Response.Cookies.Delete(
+                    authOptions.RefreshTokenCookieName,
+                    AuthUtils.BuildRefreshTokenCookieOptions(Request, null));
+
                 return NoContent();
             },
             error => resultHttpMapper.ToFailureActionResult(this, error));
@@ -127,8 +126,12 @@ public sealed class AuthController(
             return Unauthorized();
         }
 
+        Request.Cookies.TryGetValue(authOptions.RefreshTokenCookieName, out var refreshToken);
+
         var command = new LogoutAllCommand(
             userId.Value,
+            refreshToken,
+            User.TryGetAccessTokenSessionId(),
             User.TryGetAccessTokenId(),
             User.TryGetAccessTokenExpiresAtUtc());
 
@@ -137,14 +140,16 @@ public sealed class AuthController(
         return result.Match(
             () =>
             {
-                AuthUtils.DeleteRefreshTokenCookie(Request, Response, authOptions.RefreshTokenCookieName);
+                Response.Cookies.Delete(
+                    authOptions.RefreshTokenCookieName,
+                    AuthUtils.BuildRefreshTokenCookieOptions(Request, null));
                 return NoContent();
             },
             error => resultHttpMapper.ToFailureActionResult(this, error));
     }
 
-    [HttpGet("me")]
-    public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
+    [HttpGet("session")]
+    public async Task<IActionResult> GetAuthSession(CancellationToken cancellationToken)
     {
         var userId = User.TryGetUserId();
         if (!userId.HasValue)
@@ -152,11 +157,11 @@ public sealed class AuthController(
             return Unauthorized();
         }
 
-        var query = new GetMeQuery(userId.Value);
-        var result = await getMeQueryHandler.Handle(query, cancellationToken);
+        var query = new GetAuthSessionQuery(userId.Value);
+        var result = await getAuthSessionQueryHandler.Handle(query, cancellationToken);
 
         return result.Match(
-            me => Ok(me.MapToGetMeResponse()),
+            authSession => Ok(authSession.MapToGetAuthSessionResponse()),
             error => resultHttpMapper.ToFailureActionResult(this, error));
     }
 }

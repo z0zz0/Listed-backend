@@ -20,9 +20,9 @@ public static class AuthUtils
             accessTokenResult.ExpiresInSeconds);
     }
 
-    public static GetMeResponse MapToGetMeResponse(this GetMeResult meResult)
+    public static GetAuthSessionResponse MapToGetAuthSessionResponse(this GetAuthSessionResult authSessionResult)
     {
-        return new GetMeResponse(meResult.UserId, meResult.Email, meResult.AuthVersion);
+        return new GetAuthSessionResponse(authSessionResult.UserId, authSessionResult.Email, authSessionResult.AuthVersion);
     }
 
     public static Guid? TryGetUserId(this ClaimsPrincipal principal)
@@ -80,38 +80,7 @@ public static class AuthUtils
         return false;
     }
 
-    public static void WriteRefreshTokenCookie(
-        HttpRequest request,
-        HttpResponse response,
-        string refreshTokenCookieName,
-        string refreshToken,
-        DateTime refreshTokenExpiresAtUtc)
-    {
-        response.Cookies.Append(
-            refreshTokenCookieName,
-            refreshToken,
-            BuildRefreshTokenCookieOptions(request, refreshTokenExpiresAtUtc));
-    }
-
-    public static void DeleteRefreshTokenCookie(
-        HttpRequest request,
-        HttpResponse response,
-        string refreshTokenCookieName)
-    {
-        response.Cookies.Delete(
-            refreshTokenCookieName,
-            BuildRefreshTokenCookieOptions(request, null));
-    }
-
-    private static void WriteDeviceIdCookie(HttpRequest request, HttpResponse response, Guid deviceId)
-    {
-        response.Cookies.Append(
-            DeviceIdCookieName,
-            deviceId.ToString("D"),
-            BuildDeviceIdCookieOptions(request, DateTime.UtcNow.AddYears(2)));
-    }
-
-    private static CookieOptions BuildRefreshTokenCookieOptions(HttpRequest request, DateTime? expiresAtUtc)
+    public static CookieOptions BuildRefreshTokenCookieOptions(HttpRequest request, DateTime? expiresAtUtc)
     {
         return new CookieOptions
         {
@@ -121,6 +90,14 @@ public static class AuthUtils
             Path = "/api/auth",
             Expires = expiresAtUtc
         };
+    }
+
+    private static void WriteDeviceIdCookie(HttpRequest request, HttpResponse response, Guid deviceId)
+    {
+        response.Cookies.Append(
+            DeviceIdCookieName,
+            deviceId.ToString("D"),
+            BuildDeviceIdCookieOptions(request, DateTime.UtcNow.AddYears(2)));
     }
 
     private static CookieOptions BuildDeviceIdCookieOptions(HttpRequest request, DateTime? expiresAtUtc)

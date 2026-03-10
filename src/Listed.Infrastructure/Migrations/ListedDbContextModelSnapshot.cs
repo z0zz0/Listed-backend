@@ -444,13 +444,17 @@ namespace Listed.Infrastructure.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("biography");
 
+                    b.Property<DateOnly>("DateOfBirth")
+                        .HasColumnType("date")
+                        .HasColumnName("date_of_birth");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)")
                         .HasColumnName("first_name");
 
-                    b.Property<bool>("HasPhonePrefix")
+                    b.Property<bool?>("HasPhonePrefix")
                         .HasColumnType("boolean")
                         .HasColumnName("has_phone_prefix");
 
@@ -461,19 +465,16 @@ namespace Listed.Infrastructure.Migrations
                         .HasColumnName("last_name");
 
                     b.Property<string>("NationalIdentificationNumber")
-                        .IsRequired()
                         .HasMaxLength(25)
                         .HasColumnType("character varying(25)")
                         .HasColumnName("national_identification_number");
 
                     b.Property<string>("Nationality")
-                        .IsRequired()
                         .HasMaxLength(2)
                         .HasColumnType("character varying(2)")
                         .HasColumnName("nationality");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("phone_number");

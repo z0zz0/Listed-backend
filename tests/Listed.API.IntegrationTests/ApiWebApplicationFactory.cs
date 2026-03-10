@@ -1,10 +1,12 @@
 using Listed.API;
+using Listed.Application.Contracts.Communication;
 using Listed.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
 using Listed.Testing.Infrastructure;
 
@@ -31,6 +33,13 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>, I
                 ["DataProtection:CertificatePath"] = string.Empty,
                 ["DataProtection:CertificatePassword"] = string.Empty
             });
+        });
+
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<InMemoryEmailSender>();
+            services.AddSingleton<IEmailSender>(sp => sp.GetRequiredService<InMemoryEmailSender>());
         });
     }
 
@@ -84,6 +93,12 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>, I
                 await Task.Delay(150 * attempt);
             }
         }
+    }
+
+    public void ResetEmailInbox()
+    {
+        var emailSender = Services.GetRequiredService<InMemoryEmailSender>();
+        emailSender.Reset();
     }
 
     async Task IAsyncLifetime.DisposeAsync()
